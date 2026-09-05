@@ -8,6 +8,10 @@ const scheduleRoutes = require("./routes/schedule.routes");
 const timeOffTypeRoutes = require("./routes/timeOffType.routes");
 const employeeRoutes = require("./routes/employee.routes");
 const contractRoutes = require("./routes/contract.routes");
+const salaryStructureRoutes = require("./routes/salaryStructure.routes");
+const salaryRuleRoutes = require("./routes/salaryRule.routes");
+const payrunRoutes = require("./routes/payrun.routes");
+const payslipRoutes = require("./routes/payslip.routes");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
@@ -23,6 +27,10 @@ app.use("/api/schedules", scheduleRoutes);
 app.use("/api/time-off-types", timeOffTypeRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/contracts", contractRoutes);
+app.use("/api/salary-structures", salaryStructureRoutes);
+app.use("/api/salary-rules", salaryRuleRoutes);
+app.use("/api/payruns", payrunRoutes);
+app.use("/api/payslips", payslipRoutes);
 
 // Global Error Handler must be the last middleware
 app.use(errorHandler);
