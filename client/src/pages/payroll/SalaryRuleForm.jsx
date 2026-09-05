@@ -1,13 +1,33 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { SALARY_RULES } from "../../data/payroll";
+import * as api from "../../api/payroll";
 import PageHeader from "../../components/common/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
 import { Code, Info } from "lucide-react";
+import { toast } from "react-toastify";
 
 const SalaryRuleForm = () => {
   const { id } = useParams();
-  const rule = SALARY_RULES.find((r) => r.id === id) || SALARY_RULES[0];
+  const [rule, setRule] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRule = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getSalaryRuleById(id);
+        setRule(res.data || res);
+      } catch (err) {
+        toast.error("Failed to fetch salary rule");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRule();
+  }, [id]);
+
+  if (loading) return <div className="p-6 text-white">Loading salary rule...</div>;
+  if (!rule) return <div className="p-6 text-rose-400">Salary rule not found</div>;
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">

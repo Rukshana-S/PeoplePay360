@@ -1,15 +1,47 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { SCHEDULES } from "../../data/schedules";
 import PageHeader from "../../components/common/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
-import { CalendarDays, Clock, Info } from "lucide-react";
+import { CalendarDays, Info } from "lucide-react";
+import * as api from "../../api/schedules";
+import { toast } from "react-toastify";
 
 const ScheduleForm = () => {
   const { id } = useParams();
-  const schedule = SCHEDULES.find((s) => s.id === id) || SCHEDULES[0];
+  const [schedule, setSchedule] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const totalWeeklyHours = schedule.days.reduce((sum, d) => sum + d.dailyHours, 0);
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const res = await api.getScheduleById(id);
+        setSchedule(res.data || res);
+      } catch (err) {
+        toast.error("Failed to load schedule details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSchedule();
+  }, [id]);
+
+  if (loading) return <div className="text-white p-6">Loading schedule details...</div>;
+  if (!schedule) return <div className="text-white p-6">Schedule not found.</div>;
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "N/A";
+    return new Date(timeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const calcDailyHours = (startStr, endStr, breakMins) => {
+    if (!startStr || !endStr) return 0;
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    if (isNaN(start) || isNaN(end)) return 0;
+    const diffMs = end.getTime() - start.getTime();
+    const workedMinutes = (diffMs / (1000 * 60)) - (breakMins || 0);
+    return workedMinutes > 0 ? Number((workedMinutes / 60).toFixed(2)) : 0;
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -17,7 +49,7 @@ const ScheduleForm = () => {
 
       <PageHeader
         title={`Schedule: ${schedule.name}`}
-        subtitle={`Working Hours Configuration • ${schedule.type}`}
+        subtitle={`Working Hours Configuration`}
         showBack
         backPath="/working-schedules"
       />
@@ -30,13 +62,13 @@ const ScheduleForm = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">{schedule.name}</h2>
-              <p className="text-xs text-slate-400">{schedule.type}</p>
+              <p className="text-xs text-slate-400">Assigned to {schedule._count?.employees || 0} employees</p>
             </div>
           </div>
 
           <div className="bg-[#020817] border border-[#1E293B] px-4 py-2 rounded-xl text-right">
             <span className="text-xs text-slate-400 font-medium">Total Weekly Hours</span>
-            <p className="text-lg font-bold text-emerald-400">{totalWeeklyHours} Hours</p>
+            <p className="text-lg font-bold text-emerald-400">{Number(schedule.weeklyHours)} Hours</p>
           </div>
         </div>
 
@@ -53,17 +85,20 @@ const ScheduleForm = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1E293B]/60">
-              {schedule.days.map((dayRow, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-white">{dayRow.day}</td>
-                  <td className="py-3.5 px-4 font-mono text-emerald-400">{dayRow.start}</td>
-                  <td className="py-3.5 px-4 font-mono text-amber-400">{dayRow.end}</td>
-                  <td className="py-3.5 px-4 text-slate-400">{dayRow.breakHours > 0 ? `${dayRow.breakHours} hr` : "None"}</td>
-                  <td className="py-3.5 px-4 text-right font-bold text-white">
-                    {dayRow.dailyHours > 0 ? `${dayRow.dailyHours} hrs` : <span className="text-slate-500 font-normal">Off</span>}
-                  </td>
-                </tr>
-              ))}
+              {schedule.days?.map((dayRow, idx) => {
+                const dailyHours = calcDailyHours(dayRow.startTime, dayRow.endTime, dayRow.breakMinutes);
+                return (
+                  <tr key={idx} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-white">{dayRow.weekday}</td>
+                    <td className="py-3.5 px-4 font-mono text-emerald-400">{formatTime(dayRow.startTime)}</td>
+                    <td className="py-3.5 px-4 font-mono text-amber-400">{formatTime(dayRow.endTime)}</td>
+                    <td className="py-3.5 px-4 text-slate-400">{dayRow.breakMinutes > 0 ? `${dayRow.breakMinutes} mins` : "None"}</td>
+                    <td className="py-3.5 px-4 text-right font-bold text-white">
+                      {dailyHours > 0 ? `${dailyHours} hrs` : <span className="text-slate-500 font-normal">Off</span>}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

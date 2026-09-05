@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PAYRUNS, PAYSLIPS } from "../../data/payroll";
+import * as api from "../../api/payroll";
 import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
@@ -11,41 +11,63 @@ import { toast } from "react-toastify";
 const PayrunProcessing = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  const [payrun, setPayrun] = useState(null);
+  const [payslips, setPayslips] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const initialPayrun = PAYRUNS.find((p) => p.id === id) || PAYRUNS[0];
-  const [payrunStatus, setPayrunStatus] = useState(initialPayrun.status);
-
-  const payrunSlips = PAYSLIPS.filter((ps) => ps.payrunId === initialPayrun.id || initialPayrun.id === "pr-101");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [prRes, psRes] = await Promise.all([
+          api.getPayrunById(id),
+          api.getPayslips({ payrunId: id })
+        ]);
+        setPayrun(prRes.data || prRes);
+        setPayslips(psRes.data || psRes || []);
+      } catch (err) {
+        toast.error("Failed to load payrun details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const handleCompute = () => {
-    setPayrunStatus("Computing");
-    setTimeout(() => {
-      setPayrunStatus("Draft");
-      toast.success("Payrun computed! 6 payslip breakdown lines updated.");
-    }, 600);
+    toast.success("Batch computed (Mock action)");
   };
 
   const handleValidate = () => {
-    setPayrunStatus("Validated");
-    toast.success("Payrun batch validated and locked for audit!");
+    toast.success("Batch validated (Mock action)");
   };
 
   const handleMarkPaid = () => {
-    setPayrunStatus("Paid");
-    toast.success("Disbursement recorded! Status marked as Paid.");
+    toast.success("Marked as paid (Mock action)");
   };
 
   const handleSendPayslips = () => {
-    toast.info("Digital payslips emailed to all 6 included employees!");
+    toast.info("Digital payslips emailed to all included employees!");
   };
+
+  if (loading) {
+    return <div className="p-6 text-white">Loading payrun...</div>;
+  }
+
+  if (!payrun) {
+    return <div className="p-6 text-rose-400">Payrun not found</div>;
+  }
+
+  const payrunStatus = payrun.status || "DRAFT";
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <MockRbacNotice moduleKey="payruns" moduleName={`Payrun Processing (${initialPayrun.name})`} />
+      <MockRbacNotice moduleKey="payruns" moduleName={`Payrun Processing (Payrun #${payrun.id.slice(-4)})`} />
 
       <PageHeader
-        title={initialPayrun.name}
-        subtitle={`Payrun Period: ${initialPayrun.period}`}
+        title={`Payrun #${payrun.id.slice(-4)}`}
+        subtitle={`Payrun Period: ${new Date(payrun.periodStart).toLocaleDateString()} - ${new Date(payrun.periodEnd).toLocaleDateString()}`}
         showBack
         backPath="/payroll/payruns"
       />
@@ -59,10 +81,10 @@ const PayrunProcessing = () => {
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-white tracking-tight">{initialPayrun.name}</h2>
+                <h2 className="text-xl font-bold text-white tracking-tight">Payrun #{payrun.id.slice(-4)}</h2>
                 <StatusBadge status={payrunStatus} />
               </div>
-              <p className="text-xs text-slate-400 mt-1">Structure: <span className="text-slate-200 font-semibold">{initialPayrun.structureName}</span></p>
+              <p className="text-xs text-slate-400 mt-1">Structure: <span className="text-slate-200 font-semibold">{payrun.salaryStructure?.name}</span></p>
             </div>
           </div>
 
@@ -79,7 +101,7 @@ const PayrunProcessing = () => {
 
             <Button
               onClick={handleValidate}
-              disabled={payrunStatus === "Validated" || payrunStatus === "Paid"}
+              disabled={payrunStatus === "VALIDATED" || payrunStatus === "PAID"}
               className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs h-9 px-4 shadow-md shadow-emerald-500/20 disabled:opacity-50"
             >
               <CheckCircle className="w-4 h-4 mr-1.5" />
@@ -88,7 +110,7 @@ const PayrunProcessing = () => {
 
             <Button
               onClick={handleMarkPaid}
-              disabled={payrunStatus === "Paid"}
+              disabled={payrunStatus === "PAID"}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 px-4 shadow-md shadow-blue-600/20 disabled:opacity-50"
             >
               <CreditCard className="w-4 h-4 mr-1.5" />
@@ -105,24 +127,12 @@ const PayrunProcessing = () => {
             </Button>
           </div>
         </div>
-
-        {/* Warnings Panel */}
-        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-bold text-amber-200">Payrun Warnings & Pre-check Notice:</p>
-            <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-amber-300/90">
-              <li>Ethan Bennett has 1 unverified "Missing Checkout" attendance record.</li>
-              <li>James Wilson is currently marked "On Leave" for 3 days during this pay period.</li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       {/* Included Payslips Table */}
       <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
         <div className="p-4 border-b border-[#1E293B] font-bold text-white text-sm flex items-center justify-between">
-          <span>Generated Payslips ({payrunSlips.length})</span>
+          <span>Generated Payslips ({payslips.length})</span>
           <span className="text-xs text-slate-400 font-normal">Click any row to open full rule calculation sheet</span>
         </div>
 
@@ -138,16 +148,16 @@ const PayrunProcessing = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1E293B]/60">
-            {payrunSlips.map((ps) => (
+            {payslips.map((ps) => (
               <tr
                 key={ps.id}
                 onClick={() => navigate(`/payroll/payslips/${ps.id}`)}
                 className="hover:bg-slate-800/40 cursor-pointer transition-colors"
               >
-                <td className="py-3.5 px-4 font-bold text-white">{ps.employeeName}</td>
-                <td className="py-3.5 px-4 text-slate-400">{ps.structureName}</td>
-                <td className="py-3.5 px-4 font-semibold text-slate-200">₹{ps.gross.toLocaleString()}</td>
-                <td className="py-3.5 px-4 font-bold text-emerald-400 text-sm">₹{ps.net.toLocaleString()}</td>
+                <td className="py-3.5 px-4 font-bold text-white">{ps.employee ? `${ps.employee.firstName} ${ps.employee.lastName}` : "Unknown"}</td>
+                <td className="py-3.5 px-4 text-slate-400">{payrun.salaryStructure?.name}</td>
+                <td className="py-3.5 px-4 font-semibold text-slate-200">₹{Number(ps.grossSalary).toLocaleString()}</td>
+                <td className="py-3.5 px-4 font-bold text-emerald-400 text-sm">₹{Number(ps.netSalary).toLocaleString()}</td>
                 <td className="py-3.5 px-4"><StatusBadge status={ps.status} /></td>
                 <td className="py-3.5 px-4 text-right text-[#5B8DEF] font-medium">View Breakdown →</td>
               </tr>

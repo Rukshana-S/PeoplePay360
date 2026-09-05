@@ -1,24 +1,26 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SALARY_STRUCTURES } from "../../data/payroll";
-import { EMPLOYEES } from "../../data/employees";
-import PageHeader from "../../components/common/PageHeader";
+import { usePayroll } from "../../hooks/usePayroll";
+import { useEmployees } from "../../hooks/useEmployees";
+import PageHeader from "../../components/shared/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
-import { ArrowRight, CheckCircle2, CircleDollarSign } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
 
 const PayrunWizard = () => {
   const navigate = useNavigate();
+  const { salaryStructures, runPayrun } = usePayroll();
+  const { employees } = useEmployees();
   const [step, setStep] = useState(1);
 
   // Step 1 State
-  const [structure, setStructure] = useState(SALARY_STRUCTURES[0].name);
-  const [period, setPeriod] = useState("Sep 01, 2026 - Sep 30, 2026");
-  const [payrunName, setPayrunName] = useState("September 2026 Monthly Payroll");
+  const [structureId, setStructureId] = useState("");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
 
   // Step 2 State
-  const [selectedEmployees, setSelectedEmployees] = useState(EMPLOYEES.map((e) => e.id));
+  const [selectedEmployees, setSelectedEmployees] = useState([]);
 
   const toggleEmployee = (empId) => {
     if (selectedEmployees.includes(empId)) {
@@ -28,9 +30,23 @@ const PayrunWizard = () => {
     }
   };
 
-  const handleCreatePayrun = () => {
-    toast.success(`Payrun "${payrunName}" initialized with ${selectedEmployees.length} employees!`);
-    navigate("/payroll/payruns/pr-101");
+  const handleCreatePayrun = async () => {
+    if (!structureId || !periodStart || !periodEnd) {
+      toast.error("Please fill in all details");
+      return;
+    }
+    const res = await runPayrun({
+      salaryStructureId: structureId,
+      periodStart,
+      periodEnd,
+      employeeIds: selectedEmployees,
+    });
+    if (res.success) {
+      toast.success("Payrun generated successfully");
+      navigate(`/payroll/payruns/${res.data.id}`);
+    } else {
+      toast.error(res.error || "Failed to generate payrun");
+    }
   };
 
   return (
@@ -70,43 +86,52 @@ const PayrunWizard = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Payrun Batch Title</label>
-              <input
-                type="text"
-                value={payrunName}
-                onChange={(e) => setPayrunName(e.target.value)}
-                className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
-              />
-            </div>
-
-            <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Salary Structure</label>
               <select
-                value={structure}
-                onChange={(e) => setStructure(e.target.value)}
+                value={structureId}
+                onChange={(e) => setStructureId(e.target.value)}
                 className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
               >
-                {SALARY_STRUCTURES.map((s) => (
-                  <option key={s.id} value={s.name}>{s.name} ({s.type})</option>
+                <option value="">Select Structure</option>
+                {salaryStructures.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Pay Period Range</label>
-              <input
-                type="text"
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white font-mono focus:border-[#5B8DEF] focus:outline-none"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Period Start</label>
+                <input
+                  type="date"
+                  value={periodStart}
+                  onChange={(e) => setPeriodStart(e.target.value)}
+                  className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white font-mono focus:border-[#5B8DEF] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Period End</label>
+                <input
+                  type="date"
+                  value={periodEnd}
+                  onChange={(e) => setPeriodEnd(e.target.value)}
+                  className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white font-mono focus:border-[#5B8DEF] focus:outline-none"
+                />
+              </div>
             </div>
           </div>
 
           <div className="pt-4 border-t border-[#1E293B] flex justify-end">
             <Button
               type="button"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                if (structureId && periodStart && periodEnd) {
+                  setStep(2);
+                  setSelectedEmployees(employees.map(e => e.id));
+                } else {
+                  toast.error("Please fill in all details");
+                }
+              }}
               className="bg-[#5B8DEF] hover:bg-[#4a7ad8] text-white font-semibold px-5 h-10 rounded-lg flex items-center gap-2"
             >
               <span>Continue to Employee Selection</span>
@@ -124,7 +149,7 @@ const PayrunWizard = () => {
               Step 2: Select Included Employees ({selectedEmployees.length} selected)
             </h2>
             <button
-              onClick={() => setSelectedEmployees(EMPLOYEES.map((e) => e.id))}
+              onClick={() => setSelectedEmployees(employees.map((e) => e.id))}
               className="text-xs text-[#5B8DEF] hover:underline font-semibold"
             >
               Select All Employees
@@ -132,7 +157,7 @@ const PayrunWizard = () => {
           </div>
 
           <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-            {EMPLOYEES.map((emp) => {
+            {employees.map((emp) => {
               const isSelected = selectedEmployees.includes(emp.id);
               return (
                 <div
@@ -152,11 +177,10 @@ const PayrunWizard = () => {
                       className="rounded border-[#1E293B] text-[#5B8DEF] focus:ring-0"
                     />
                     <div>
-                      <span className="font-semibold text-sm block leading-tight">{emp.name}</span>
+                      <span className="font-semibold text-sm block leading-tight">{emp.firstName} {emp.lastName}</span>
                       <span className="text-xs text-slate-400">{emp.jobPosition} • {emp.department}</span>
                     </div>
                   </div>
-                  <span className="text-xs font-mono text-emerald-400">{emp.schedule}</span>
                 </div>
               );
             })}

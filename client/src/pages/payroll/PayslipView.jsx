@@ -1,29 +1,47 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { PAYSLIPS, calculatePayslipBreakdown } from "../../data/payroll";
-import { EMPLOYEES } from "../../data/employees";
+import * as api from "../../api/payroll";
 import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
-import { FileText, User, Building2, Calendar, Printer } from "lucide-react";
+import { User, Building2, Calendar, Printer } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
 
 const PayslipView = () => {
   const { id } = useParams();
+  const [payslip, setPayslip] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const payslip = PAYSLIPS.find((ps) => ps.id === id) || PAYSLIPS[0];
-  const employee = EMPLOYEES.find((e) => e.name === payslip.employeeName) || EMPLOYEES[0];
+  useEffect(() => {
+    const fetchPayslip = async () => {
+      try {
+        setLoading(true);
+        const res = await api.getPayslipById(id);
+        setPayslip(res.data || res);
+      } catch (err) {
+        toast.error("Failed to fetch payslip details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayslip();
+  }, [id]);
 
-  const breakdown = calculatePayslipBreakdown(payslip.annualWage, payslip.structureName);
+  if (loading) return <div className="p-6 text-white">Loading payslip...</div>;
+  if (!payslip) return <div className="p-6 text-rose-400">Payslip not found</div>;
+
+  const employee = payslip.employee || {};
+  const breakdownLines = payslip.lines || [];
+  const empName = `${employee.firstName || ""} ${employee.lastName || ""}`.trim() || "Unknown";
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <MockRbacNotice moduleKey="payslips" moduleName={`Payslip (${payslip.employeeName})`} />
+      <MockRbacNotice moduleKey="payslips" moduleName={`Payslip (${empName})`} />
 
       <PageHeader
-        title={`Payslip: ${payslip.employeeName}`}
-        subtitle={`Period: ${payslip.period} • ${payslip.structureName}`}
+        title={`Payslip: ${empName}`}
+        subtitle={`Period: ${new Date(payslip.payrun?.periodStart).toLocaleDateString()} - ${new Date(payslip.payrun?.periodEnd).toLocaleDateString()}`}
         showBack
         backPath="/payroll/payslips"
       >
@@ -47,7 +65,7 @@ const PayslipView = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-white tracking-tight">PeoplePay360 Payslip Statement</h2>
-              <p className="text-xs text-slate-400">Pay Period: <span className="text-slate-200 font-mono">{payslip.period}</span></p>
+              <p className="text-xs text-slate-400">Pay Period: <span className="text-slate-200 font-mono">{new Date(payslip.payrun?.periodStart).toLocaleDateString()} - {new Date(payslip.payrun?.periodEnd).toLocaleDateString()}</span></p>
             </div>
           </div>
           <StatusBadge status={payslip.status} />
@@ -58,25 +76,24 @@ const PayslipView = () => {
           <div>
             <span className="text-slate-400 font-medium block">Employee Name</span>
             <span className="font-bold text-white text-sm flex items-center gap-1.5 mt-0.5">
-              <User className="w-3.5 h-3.5 text-[#5B8DEF]" /> {payslip.employeeName}
+              <User className="w-3.5 h-3.5 text-[#5B8DEF]" /> {empName}
             </span>
-            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.employeeCode}</span>
+            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.employeeCode || "N/A"}</span>
           </div>
 
           <div>
             <span className="text-slate-400 font-medium block">Department & Role</span>
             <span className="font-bold text-slate-200 flex items-center gap-1.5 mt-0.5">
-              <Building2 className="w-3.5 h-3.5 text-purple-400" /> {employee.department}
+              <Building2 className="w-3.5 h-3.5 text-purple-400" /> {employee.department || "N/A"}
             </span>
-            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.jobPosition}</span>
+            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.jobPosition || "N/A"}</span>
           </div>
 
           <div>
             <span className="text-slate-400 font-medium block">Salary Structure</span>
             <span className="font-bold text-slate-200 flex items-center gap-1.5 mt-0.5">
-              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {breakdown.structureName}
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" /> {payslip.payrun?.salaryStructure?.name || "N/A"}
             </span>
-            <span className="text-slate-400 text-[11px] block mt-0.5">Annual Wage: ₹{payslip.annualWage.toLocaleString()}</span>
           </div>
         </div>
 
@@ -88,13 +105,12 @@ const PayslipView = () => {
               <thead className="bg-[#020817] text-slate-400 font-semibold uppercase tracking-wider border-b border-[#1E293B]">
                 <tr>
                   <th className="py-3 px-4">Rule Name</th>
-                  <th className="py-3 px-4">Code</th>
                   <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4 text-right">Amount (₹)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E293B]/60">
-                {breakdown.lines.map((line, idx) => {
+                {breakdownLines.map((line, idx) => {
                   const isGrossOrNet = line.category === "GROSS" || line.category === "NET";
                   return (
                     <tr
@@ -107,8 +123,7 @@ const PayslipView = () => {
                           : "hover:bg-slate-800/40"
                       }
                     >
-                      <td className="py-3 px-4">{line.name}</td>
-                      <td className="py-3 px-4 font-mono text-slate-400">{line.code}</td>
+                      <td className="py-3 px-4">{line.ruleName}</td>
                       <td className="py-3 px-4 font-mono">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] ${
                           line.category === "BASIC" || line.category === "ALW" ? "bg-emerald-500/10 text-emerald-400" :
@@ -121,7 +136,7 @@ const PayslipView = () => {
                         line.category === "DED" ? "text-rose-400" :
                         line.category === "NET" ? "text-emerald-400 text-base" : "text-white"
                       }`}>
-                        {line.category === "DED" ? `- ₹${line.amount.toLocaleString()}` : `₹${line.amount.toLocaleString()}`}
+                        {line.category === "DED" ? `- ₹${Number(line.amount).toLocaleString()}` : `₹${Number(line.amount).toLocaleString()}`}
                       </td>
                     </tr>
                   );
@@ -138,7 +153,7 @@ const PayslipView = () => {
             <span className="text-xs text-slate-400 mt-0.5 block">Direct Deposit to Employee Bank Account</span>
           </div>
           <div className="text-right">
-            <span className="text-2xl font-extrabold text-emerald-400">₹{breakdown.net.toLocaleString()}</span>
+            <span className="text-2xl font-extrabold text-emerald-400">₹{Number(payslip.netSalary).toLocaleString()}</span>
           </div>
         </div>
       </div>

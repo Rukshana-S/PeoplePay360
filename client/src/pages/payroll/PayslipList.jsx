@@ -1,24 +1,27 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { PAYSLIPS } from "../../data/payroll";
+import { usePayroll } from "../../hooks/usePayroll";
 import { canAccessModule } from "../../utils/rolePermissions";
-import PageHeader from "../../components/common/PageHeader";
+import PageHeader from "../../components/shared/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
+import EmptyState from "../../components/shared/EmptyState";
 import { FileText } from "lucide-react";
 
 const PayslipList = () => {
+  const { payslips, loading, error } = usePayroll();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = user?.role || "EMPLOYEE";
 
-  const filteredPayslips = PAYSLIPS.filter((ps) =>
-    ps.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-    ps.period.toLowerCase().includes(search.toLowerCase()) ||
-    ps.structureName.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPayslips = payslips.filter((ps) => {
+    const empName = ps.employee ? `${ps.employee.firstName} ${ps.employee.lastName}` : "";
+    const structName = ps.payrun?.salaryStructure?.name || "";
+    return empName.toLowerCase().includes(search.toLowerCase()) ||
+      structName.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -55,39 +58,53 @@ const PayslipList = () => {
         onSearchChange={setSearch}
       />
 
-      <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
-        <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-[#020817] text-slate-400 font-semibold uppercase tracking-wider border-b border-[#1E293B]">
-            <tr>
-              <th className="py-3.5 px-4">Employee</th>
-              <th className="py-3.5 px-4">Period</th>
-              <th className="py-3.5 px-4">Salary Structure</th>
-              <th className="py-3.5 px-4">Gross Amount</th>
-              <th className="py-3.5 px-4">Net Payable</th>
-              <th className="py-3.5 px-4">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#1E293B]/60">
-            {filteredPayslips.map((ps) => (
-              <tr
-                key={ps.id}
-                onClick={() => navigate(`/payroll/payslips/${ps.id}`)}
-                className="hover:bg-slate-800/40 cursor-pointer transition-colors"
-              >
-                <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-[#5B8DEF]" />
-                  <span>{ps.employeeName}</span>
-                </td>
-                <td className="py-3.5 px-4 font-mono text-slate-300">{ps.period}</td>
-                <td className="py-3.5 px-4 text-slate-400">{ps.structureName}</td>
-                <td className="py-3.5 px-4 font-semibold text-slate-200">₹{ps.gross.toLocaleString()}</td>
-                <td className="py-3.5 px-4 font-bold text-emerald-400 text-sm">₹{ps.net.toLocaleString()}</td>
-                <td className="py-3.5 px-4"><StatusBadge status={ps.status} /></td>
+      {loading ? (
+        <div className="text-white p-6">Loading payslips...</div>
+      ) : error ? (
+        <div className="text-rose-400 p-6">Error: {error}</div>
+      ) : filteredPayslips.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="No payslips found"
+          description="Process a payrun to generate payslips."
+          actionLabel="Go to Payruns"
+          onAction={() => navigate("/payroll/payruns")}
+        />
+      ) : (
+        <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-[#020817] text-slate-400 font-semibold uppercase tracking-wider border-b border-[#1E293B]">
+              <tr>
+                <th className="py-3.5 px-4">Employee</th>
+                <th className="py-3.5 px-4">Period</th>
+                <th className="py-3.5 px-4">Salary Structure</th>
+                <th className="py-3.5 px-4">Gross Amount</th>
+                <th className="py-3.5 px-4">Net Payable</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-[#1E293B]/60">
+              {filteredPayslips.map((ps) => (
+                <tr
+                  key={ps.id}
+                  onClick={() => navigate(`/payroll/payslips/${ps.id}`)}
+                  className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+                >
+                  <td className="py-3.5 px-4 font-bold text-white flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-[#5B8DEF]" />
+                    <span>{ps.employee ? `${ps.employee.firstName} ${ps.employee.lastName}` : "Unknown"}</span>
+                  </td>
+                  <td className="py-3.5 px-4 font-mono text-slate-300">
+                    {ps.payrun ? `${new Date(ps.payrun.periodStart).toLocaleDateString()} - ${new Date(ps.payrun.periodEnd).toLocaleDateString()}` : "—"}
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-400">{ps.payrun?.salaryStructure?.name || "—"}</td>
+                  <td className="py-3.5 px-4 font-semibold text-slate-200">₹{Number(ps.grossSalary).toLocaleString()}</td>
+                  <td className="py-3.5 px-4 font-bold text-emerald-400 text-sm">₹{Number(ps.netSalary).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };

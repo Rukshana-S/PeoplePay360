@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useEmployees } from "../../hooks/useEmployees";
+import { usePayroll } from "../../hooks/usePayroll";
+import { useTimeOff } from "../../hooks/useTimeOff";
 import { getRoleDisplayName } from "../../utils/rolePermissions";
 import PageHeader from "../../components/common/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
+import FilterBar from "../../components/shared/FilterBar";
 import {
   TrendingUp,
   DollarSign,
@@ -15,7 +19,16 @@ import {
 
 const ReportsDashboard = () => {
   const { user } = useAuth();
+  const { employees } = useEmployees();
+  const { payslips } = usePayroll();
+  const { requests: leaveRequests } = useTimeOff();
   const role = user?.role || "EMPLOYEE";
+
+  const [deptFilter, setDeptFilter] = useState("ALL");
+
+  const totalNet = payslips.reduce((sum, p) => sum + (Number(p.netSalary) || 0), 0);
+  const avgNet = payslips.length > 0 ? Math.round(totalNet / payslips.length) : 0;
+  const approvedLeaves = leaveRequests.filter((l) => l.status === "APPROVED").length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -26,6 +39,24 @@ const ReportsDashboard = () => {
         subtitle={`Real-time HR analytics & financial reporting • Logged as ${getRoleDisplayName(role)}`}
       />
 
+      <FilterBar
+        filters={[
+          {
+            key: "dept",
+            label: "Department",
+            value: deptFilter,
+            options: [
+              { label: "All Departments", value: "ALL" },
+              { label: "Engineering", value: "Engineering" },
+              { label: "Human Resources", value: "Human Resources" },
+              { label: "Product Management", value: "Product Management" },
+              { label: "Design", value: "Design" },
+            ],
+            onChange: setDeptFilter,
+          },
+        ]}
+      />
+
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-4 space-y-2 relative overflow-hidden">
@@ -33,16 +64,16 @@ const ReportsDashboard = () => {
             <span>Total Net Salary</span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
-          <p className="text-xl font-bold text-white">₹53,120</p>
-          <span className="text-[10px] text-emerald-400 font-medium">↑ +4.2% from last month</span>
+          <p className="text-xl font-bold text-white">₹{totalNet.toLocaleString()}</p>
+          <span className="text-[10px] text-emerald-400 font-medium">Active payroll total</span>
         </div>
 
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-4 space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Payslips Disbursed</span>
+            <span>Payslips Generated</span>
             <FileCheck2 className="w-4 h-4 text-[#5B8DEF]" />
           </div>
-          <p className="text-xl font-bold text-white">5 Payslips</p>
+          <p className="text-xl font-bold text-white">{payslips.length} Payslips</p>
           <span className="text-[10px] text-[#5B8DEF] font-medium">100% processing rate</span>
         </div>
 
@@ -51,17 +82,17 @@ const ReportsDashboard = () => {
             <span>Average Net Salary</span>
             <TrendingUp className="w-4 h-4 text-purple-400" />
           </div>
-          <p className="text-xl font-bold text-white">₹10,624</p>
+          <p className="text-xl font-bold text-white">₹{avgNet.toLocaleString()}</p>
           <span className="text-[10px] text-purple-400 font-medium">Per employee average</span>
         </div>
 
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-4 space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Attendance Health</span>
+            <span>Active Workforce</span>
             <UserCheck className="w-4 h-4 text-teal-400" />
           </div>
-          <p className="text-xl font-bold text-white">96.4%</p>
-          <span className="text-[10px] text-teal-400 font-medium">On-time check-in rate</span>
+          <p className="text-xl font-bold text-white">{employees.length} Staff</p>
+          <span className="text-[10px] text-teal-400 font-medium">Registered workforce</span>
         </div>
 
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-4 space-y-2 relative overflow-hidden">
@@ -69,8 +100,7 @@ const ReportsDashboard = () => {
             <span>Approved Leave</span>
             <CalendarCheck2 className="w-4 h-4 text-amber-400" />
           </div>
-          <p className="text-xl font-bold text-white">5 Days</p>
-          <span className="text-[10px] text-amber-400 font-medium">Active month leave</span>
+          <p className="text-xl font-bold text-white">{approvedLeaves} Requests</p>
         </div>
       </div>
 

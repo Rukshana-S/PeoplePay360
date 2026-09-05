@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { SALARY_STRUCTURES, SALARY_RULES } from "../../data/payroll";
+import * as api from "../../api/payroll";
 import PageHeader from "../../components/common/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
 import { Layers, Info } from "lucide-react";
+import { toast } from "react-toastify";
 
 const SalaryStructureForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [structure, setStructure] = useState(null);
+  const [mappedRules, setMappedRules] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const structure = SALARY_STRUCTURES.find((s) => s.id === id) || SALARY_STRUCTURES[0];
-  const mappedRules = SALARY_RULES.filter((r) => r.structureId === structure.id);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [structRes, rulesRes] = await Promise.all([
+          api.getSalaryStructureById(id),
+          api.getSalaryRules({ structureId: id })
+        ]);
+        setStructure(structRes.data || structRes);
+        setMappedRules(rulesRes.data || rulesRes || []);
+      } catch (err) {
+        toast.error("Failed to fetch salary structure");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div className="p-6 text-white">Loading salary structure...</div>;
+  if (!structure) return <div className="p-6 text-rose-400">Salary structure not found</div>;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -71,6 +94,11 @@ const SalaryStructureForm = () => {
                     <td className="py-3.5 px-4 font-mono text-emerald-400">{rule.formula}</td>
                   </tr>
                 ))}
+                {mappedRules.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="py-4 px-4 text-center text-slate-400">No rules associated with this structure yet.</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
