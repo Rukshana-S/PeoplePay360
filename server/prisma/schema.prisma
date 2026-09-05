@@ -166,7 +166,7 @@ model Employee {
   jobPositionId  String
   scheduleId     String?
   managerId      String?
-  userId         String?
+  userId         String? @unique
 
   department     Department @relation(fields: [departmentId], references: [id])
   jobPosition    JobPosition @relation(fields: [jobPositionId], references: [id])
