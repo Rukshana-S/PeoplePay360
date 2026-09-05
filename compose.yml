@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    container_name: peoplepay_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-peoplepay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_local_password}
+      POSTGRES_DB: ${POSTGRES_DB:-peoplepay360}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
