@@ -18,6 +18,8 @@ import Dashboard from "./pages/Dashboard";
 import EmployeesKanban from "./pages/employees/EmployeesKanban";
 import EmployeesList from "./pages/employees/EmployeesList";
 import EmployeeForm from "./pages/employees/EmployeeForm";
+import EmployeeCreate from "./pages/employees/EmployeeCreate";
+import EmployeeEdit from "./pages/employees/EmployeeEdit";
 import EmployeeContracts from "./pages/employees/EmployeeContracts";
 import EmployeeAttendance from "./pages/employees/EmployeeAttendance";
 import EmployeeTimeOff from "./pages/employees/EmployeeTimeOff";
@@ -25,6 +27,7 @@ import EmployeeTimeOff from "./pages/employees/EmployeeTimeOff";
 // Module 2: Contracts
 import ContractList from "./pages/contracts/ContractList";
 import ContractForm from "./pages/contracts/ContractForm";
+import ContractCreate from "./pages/contracts/ContractCreate";
 
 // Module 3: Schedules
 import ScheduleList from "./pages/schedules/ScheduleList";
@@ -33,6 +36,7 @@ import ScheduleForm from "./pages/schedules/ScheduleForm";
 // Module 4: Attendance
 import AttendanceList from "./pages/attendance/AttendanceList";
 import AttendanceForm from "./pages/attendance/AttendanceForm";
+import AttendanceCreate from "./pages/attendance/AttendanceCreate";
 
 // Module 5: Time Off
 import TimeOffRequests from "./pages/timeoff/TimeOffRequests";
@@ -74,13 +78,16 @@ function App() {
             {/* Module 1: Employees */}
             <Route path="/employees" element={<EmployeesKanban />} />
             <Route path="/employees/list" element={<EmployeesList />} />
+            <Route path="/employees/new" element={<EmployeeCreate />} />
             <Route path="/employees/:id" element={<EmployeeForm />} />
+            <Route path="/employees/:id/edit" element={<EmployeeEdit />} />
             <Route path="/employees/:id/contracts" element={<EmployeeContracts />} />
             <Route path="/employees/:id/attendance" element={<EmployeeAttendance />} />
             <Route path="/employees/:id/timeoff" element={<EmployeeTimeOff />} />
 
             {/* Module 2: Contracts */}
             <Route path="/contracts" element={<ContractList />} />
+            <Route path="/contracts/new" element={<ContractCreate />} />
             <Route path="/contracts/:id" element={<ContractForm />} />
 
             {/* Module 3: Working Schedules */}
@@ -89,7 +96,9 @@ function App() {
 
             {/* Module 4: Attendance */}
             <Route path="/attendance" element={<AttendanceList />} />
+            <Route path="/attendance/new" element={<AttendanceCreate />} />
             <Route path="/attendance/:id" element={<AttendanceForm />} />
+
 
             {/* Module 5: Time Off */}
             <Route path="/time-off/requests" element={<TimeOffRequests />} />
