@@ -25,6 +25,13 @@ enum EmployeeStatus {
   TERMINATED
 }
 
+enum EmployeeType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+  INTERN
+}
+
 enum ContractStatus {
   DRAFT
   ACTIVE
@@ -139,6 +146,7 @@ model ScheduleDay {
   weekday    String
   startTime  DateTime @db.Time(0)
   endTime    DateTime @db.Time(0)
+  breakMinutes Int @default(60)
 
   schedule   WorkingSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
 
@@ -161,6 +169,7 @@ model Employee {
   email          String @unique
   hireDate       DateTime
   status         EmployeeStatus
+  employeeType   EmployeeType @default(FULL_TIME)
 
   departmentId   String
   jobPositionId  String
@@ -297,6 +306,9 @@ model TimeOffAllocation {
 
   allocated   Decimal @db.Decimal(5,2)
   remaining   Decimal @db.Decimal(5,2)
+  
+  validFrom   DateTime
+  validUntil  DateTime
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   type        TimeOffType @relation(fields: [typeId], references: [id])
@@ -328,7 +340,7 @@ model SalaryRule {
 
   structureId String
 
-  code        String @unique
+  code        String
 
   category    SalaryCategory
 
@@ -342,6 +354,7 @@ model SalaryRule {
 
   payslipLines PayslipLine[]
 
+  @@unique([structureId, code])
   @@index([structureId])
   @@index([sequence])
   @@map("salary_rules")
