@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:15
+    container_name: peoplepay_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-peoplepay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your_local_password}
+      POSTGRES_DB: ${POSTGRES_DB:-peoplepay360}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: peoplepay_server
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-peoplepay}:${POSTGRES_PASSWORD:-your_local_password}@db:5432/${POSTGRES_DB:-peoplepay360}?schema=public
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - db
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: peoplepay_client
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://server:5000
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
+  
