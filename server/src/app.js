@@ -16,6 +16,9 @@ const attendanceRoutes = require("./routes/attendance.routes");
 const timeOffAllocationRoutes = require("./routes/timeOffAllocation.routes");
 const timeOffRequestRoutes = require("./routes/timeOffRequest.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const authRoutes = require("./routes/auth.routes");
+const userRoutes = require("./routes/user.routes");
+const { authMiddleware } = require("./middlewares/auth");
 const errorHandler = require("./middlewares/errorHandler");
 
 const app = express();
@@ -23,7 +26,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Authenticate every /api request EXCEPT /api/auth
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/auth')) {
+        return next();
+    }
+    if (req.path.startsWith('/api')) {
+        return authMiddleware(req, res, next);
+    }
+    next();
+});
+
 // Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/job-positions", jobPositionRoutes);

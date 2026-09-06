@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { usePayroll } from "../../hooks/usePayroll";
+import { canEditModule } from "../../utils/rolePermissions";
 import PageHeader from "../../components/shared/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
 import EmptyState from "../../components/shared/EmptyState";
@@ -19,6 +21,7 @@ const SalaryRuleList = () => {
   const [sequence, setSequence] = useState(1);
   const [formula, setFormula] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCreateRule = async (e) => {
     e.preventDefault();
@@ -76,8 +79,8 @@ const SalaryRuleList = () => {
         subtitle="Individual computation formulas for allowances, tax deductions, and net salary lines"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="New Salary Rule"
-        onActionClick={() => setIsModalOpen(true)}
+        actionLabel={canEditModule(user?.role, "salaryRules") ? "New Salary Rule" : undefined}
+        onActionClick={canEditModule(user?.role, "salaryRules") ? () => setIsModalOpen(true) : undefined}
       />
 
       {loading ? (
@@ -89,8 +92,8 @@ const SalaryRuleList = () => {
           icon={Code}
           title="No salary rules found"
           description="Define salary calculation rules."
-          actionLabel="Create Salary Rule"
-          onAction={() => setIsModalOpen(true)}
+          actionLabel={canEditModule(user?.role, "salaryRules") ? "Create Salary Rule" : undefined}
+          onAction={canEditModule(user?.role, "salaryRules") ? () => setIsModalOpen(true) : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
@@ -113,7 +116,7 @@ const SalaryRuleList = () => {
                 >
                   <td className="py-3.5 px-4 font-bold text-white">{rule.name}</td>
                   <td className="py-3.5 px-4 font-mono text-[#5B8DEF] font-semibold">{rule.code}</td>
-                  <td className="py-3.5 px-4 text-slate-300">{rule.salaryStructure?.name || "—"}</td>
+                  <td className="py-3.5 px-4 text-slate-300">{rule.structure?.name || "—"}</td>
                   <td className="py-3.5 px-4 font-mono">
                     <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300">
                       {rule.category}

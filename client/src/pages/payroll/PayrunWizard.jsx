@@ -178,7 +178,7 @@ const PayrunWizard = () => {
                     />
                     <div>
                       <span className="font-semibold text-sm block leading-tight">{emp.firstName} {emp.lastName}</span>
-                      <span className="text-xs text-slate-400">{emp.jobPosition} • {emp.department}</span>
+                      <span className="text-xs text-slate-400">{emp.jobPosition?.title || emp.jobPosition} • {emp.department?.name || emp.department}</span>
                     </div>
                   </div>
                 </div>

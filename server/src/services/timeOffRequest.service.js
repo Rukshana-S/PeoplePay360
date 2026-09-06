@@ -1,15 +1,21 @@
 const prisma = require("../config/db");
 
 // GET all time off requests
-const getAllRequests = async (query) => {
+const getAllRequests = async (query, user) => {
     const where = {};
     if (query.employeeId) where.employeeId = query.employeeId;
     if (query.status) where.status = query.status;
 
+    // If EMPLOYEE, limit to their own employee record
+    // HR_MANAGER is allowed to fetch all to approve them
+    if (user?.role === "EMPLOYEE") {
+        where.employee = { userId: user.id };
+    }
+
     return await prisma.timeOffRequest.findMany({
         where,
         include: {
-            employee: { select: { id: true, firstName: true, lastName: true } },
+            employee: { select: { id: true, firstName: true, lastName: true, userId: true } },
             type: { select: { id: true, name: true, payrollAffects: true } }
         },
         orderBy: { startDate: "desc" }
@@ -17,7 +23,18 @@ const getAllRequests = async (query) => {
 };
 
 // SUBMIT a new time off request
-const requestTimeOff = async (data) => {
+const requestTimeOff = async (data, user) => {
+    let finalEmployeeId = data.employeeId;
+    
+    // Auto-resolve employee ID for EMPLOYEE or HR_MANAGER role
+    if (user?.role === "EMPLOYEE" || user?.role === "HR_MANAGER") {
+        const emp = await prisma.employee.findUnique({ where: { userId: user.id } });
+        if (!emp) throw new Error("Employee profile not found for this user.");
+        finalEmployeeId = emp.id;
+    }
+
+    if (!finalEmployeeId) throw new Error("Employee ID is required.");
+
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
 
@@ -36,11 +53,12 @@ const requestTimeOff = async (data) => {
 
     return await prisma.timeOffRequest.create({
         data: {
-            employeeId: data.employeeId,
+            employeeId: finalEmployeeId,
             typeId: data.typeId,
             startDate,
             endDate,
             duration,
+            reason: data.reason || null,
             status: initialStatus
         },
         include: { type: true }
@@ -58,8 +76,38 @@ const reviewRequest = async (id, data) => {
     const request = await prisma.timeOffRequest.findUnique({ where: { id } });
     if (!request) throw new Error("Time off request not found");
 
-    if (request.status !== "PENDING") {
-        throw new Error(`This request has already been ${request.status.toLowerCase()}`);
+    if (request.status === status) {
+        throw new Error(`This request is already ${status.toLowerCase()}`);
+    }
+
+    // Find allocation for this type and employee
+    const allocation = await prisma.timeOffAllocation.findFirst({
+        where: {
+            employeeId: request.employeeId,
+            typeId: request.typeId
+        }
+    });
+
+    if (status === "APPROVED") {
+        if (allocation) {
+            const newRemaining = Number(allocation.remaining) - Number(request.duration);
+            if (newRemaining < 0) {
+                throw new Error("Insufficient leave balance.");
+            }
+            await prisma.timeOffAllocation.update({
+                where: { id: allocation.id },
+                data: { remaining: newRemaining }
+            });
+        }
+    } else if (status === "REJECTED" || status === "PENDING") {
+        // Reversal of an already APPROVED request
+        if (request.status === "APPROVED" && allocation) {
+            const newRemaining = Number(allocation.remaining) + Number(request.duration);
+            await prisma.timeOffAllocation.update({
+                where: { id: allocation.id },
+                data: { remaining: newRemaining }
+            });
+        }
     }
 
     return await prisma.timeOffRequest.update({

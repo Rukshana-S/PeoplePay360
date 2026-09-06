@@ -22,6 +22,10 @@ export const createTimeOffAllocation = async (data) => {
   return api.post('/time-off-allocations', data);
 };
 
+export const deleteTimeOffAllocation = async (id) => {
+  return api.delete(`/time-off-allocations/${id}`);
+};
+
 // Time Off Types
 export const getTimeOffTypes = async () => {
   return api.get('/time-off-types');

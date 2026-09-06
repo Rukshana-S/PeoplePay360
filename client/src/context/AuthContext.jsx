@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { mockAuthService } from "../services/mockAuth";
+import api from "../api/axios";
 
 const STORAGE_KEY = "peoplepay360_user_session";
 
@@ -28,12 +28,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const authenticatedUser = await mockAuthService.login(email, password);
+      const response = await api.post("/auth/login", { email, password });
+      const authenticatedUser = response.data;
       setUser(authenticatedUser);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(authenticatedUser));
       return authenticatedUser;
     } catch (error) {
-      throw error;
+      throw error.response?.data?.message ? new Error(error.response.data.message) : error;
     } finally {
       setLoading(false);
     }

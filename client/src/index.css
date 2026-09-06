@@ -73,4 +73,43 @@
 
 .Toastify__progress-bar--dark {
   background: #5B8DEF !important;
+}/* --- PRINT STYLES FOR PDF GENERATION --- */
+@media print {
+  /* Hide UI elements that shouldn't appear in the PDF */
+  .print-hidden,
+  nav,
+  header:not(.print-visible),
+  aside,
+  button {
+    display: none !important;
+  }
+
+  /* Ensure the background and text colors print properly */
+  body, #root, main {
+    background-color: white !important;
+    color: black !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Invert dark mode styling for clean paper print */
+  .bg-\[\#0F172A\], .bg-\[\#020817\] {
+    background-color: white !important;
+    border-color: #e2e8f0 !important;
+  }
+  
+  .text-white, .text-slate-200, .text-slate-300, .text-slate-400 {
+    color: #1e293b !important;
+  }
+
+  /* Fix tables */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+  
+  th, td {
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
 }

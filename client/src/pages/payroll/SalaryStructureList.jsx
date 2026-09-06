@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { usePayroll } from "../../hooks/usePayroll";
+import { canEditModule } from "../../utils/rolePermissions";
 import PageHeader from "../../components/shared/PageHeader";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
 import EmptyState from "../../components/shared/EmptyState";
@@ -14,6 +16,7 @@ const SalaryStructureList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCreateStructure = async (e) => {
     e.preventDefault();
@@ -60,8 +63,8 @@ const SalaryStructureList = () => {
         subtitle="Manage structure templates defining salary allowances and tax deduction rules"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="New Structure"
-        onActionClick={() => setIsModalOpen(true)}
+        actionLabel={canEditModule(user?.role, "salaryStructures") ? "New Structure" : undefined}
+        onActionClick={canEditModule(user?.role, "salaryStructures") ? () => setIsModalOpen(true) : undefined}
       />
 
       {loading ? (
@@ -73,8 +76,8 @@ const SalaryStructureList = () => {
           icon={Layers}
           title="No salary structures found"
           description="Create a salary structure template."
-          actionLabel="Create Structure"
-          onAction={() => setIsModalOpen(true)}
+          actionLabel={canEditModule(user?.role, "salaryStructures") ? "Create Structure" : undefined}
+          onAction={canEditModule(user?.role, "salaryStructures") ? () => setIsModalOpen(true) : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">

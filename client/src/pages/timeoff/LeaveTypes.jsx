@@ -7,8 +7,12 @@ import EmptyState from "../../components/shared/EmptyState";
 import { Check, X, Layers, Plus } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const LeaveTypes = () => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
+  const isAdminOrHR = user?.role === 'ADMIN' || user?.role === 'HR_MANAGER';
   const { leaveTypes, loading, error, addLeaveType } = useTimeOff();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState("");
@@ -44,6 +48,14 @@ const LeaveTypes = () => {
         >
           Leave Requests
         </button>
+        {isAdminOrHR && (
+          <button
+            onClick={() => navigate("/time-off/approvals")}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50"
+          >
+            Leave Approvals
+          </button>
+        )}
         <button
           onClick={() => navigate("/time-off/allocations")}
           className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -61,8 +73,8 @@ const LeaveTypes = () => {
       <PageHeader
         title="Leave Types"
         subtitle="Configure leave rules, tracking units, and payroll impact"
-        actionLabel="New Leave Type"
-        onActionClick={() => setIsModalOpen(true)}
+        actionLabel={!isEmployee ? "New Leave Type" : undefined}
+        onActionClick={!isEmployee ? () => setIsModalOpen(true) : undefined}
       />
 
       {loading ? (
@@ -73,9 +85,10 @@ const LeaveTypes = () => {
         <EmptyState
           icon={Layers}
           title="No leave types configured"
+          title="No leave types configured"
           description="Define leave categories for your organization."
-          actionLabel="Create Leave Type"
-          onAction={() => setIsModalOpen(true)}
+          actionLabel={!isEmployee ? "Create Leave Type" : undefined}
+          onAction={!isEmployee ? () => setIsModalOpen(true) : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEmployees } from "../../hooks/useEmployees";
+import { useAuth } from "../../context/AuthContext";
 import PageHeader from "../../components/shared/PageHeader";
 import StatusBadge from "../../components/shared/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
@@ -9,6 +10,8 @@ import ConfirmDeleteDialog from "../../components/shared/ConfirmDeleteDialog";
 import { User, Trash2 } from "lucide-react";
 
 const EmployeesList = () => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
   const { employees, loading, error, removeEmployee } = useEmployees();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState(null);
@@ -36,24 +39,26 @@ const EmployeesList = () => {
         subtitle="Detailed tabular list of workforce records"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="New Employee"
-        onActionClick={() => navigate("/employees/new")}
+        actionLabel={!isEmployee ? "New Employee" : undefined}
+        onActionClick={!isEmployee ? () => navigate("/employees/new") : undefined}
         viewMode="list"
         onViewModeChange={(mode) => {
           if (mode === "kanban") navigate("/employees");
         }}
       >
-        <div className="flex items-center gap-2 mr-2 border-r border-[#1E293B] pr-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 font-medium">
-            <input 
-              type="checkbox" 
-              checked={showInactive} 
-              onChange={(e) => setShowInactive(e.target.checked)} 
-              className="rounded bg-[#020817] border-[#1E293B] text-[#5B8DEF] focus:ring-[#5B8DEF]"
-            />
-            Show Inactive
-          </label>
-        </div>
+        {!isEmployee && (
+          <div className="flex items-center gap-2 mr-2 border-r border-[#1E293B] pr-3">
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 font-medium">
+              <input 
+                type="checkbox" 
+                checked={showInactive} 
+                onChange={(e) => setShowInactive(e.target.checked)} 
+                className="rounded bg-[#020817] border-[#1E293B] text-[#5B8DEF] focus:ring-[#5B8DEF]"
+              />
+              Show Inactive
+            </label>
+          </div>
+        )}
       </PageHeader>
 
       {loading ? (
@@ -80,7 +85,7 @@ const EmployeesList = () => {
                   <th className="py-3.5 px-4">Job Position</th>
                   <th className="py-3.5 px-4">Department</th>
                   <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  {!isEmployee && <th className="py-3.5 px-4 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E293B]/60">
@@ -105,15 +110,17 @@ const EmployeesList = () => {
                     <td className="py-3.5 px-4">
                       <StatusBadge status={emp.status} />
                     </td>
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => setDeleteId(emp.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                        title="Delete Employee"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+                    {!isEmployee && (
+                      <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setDeleteId(emp.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                          title="Delete Employee"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

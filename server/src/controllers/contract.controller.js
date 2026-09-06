@@ -1,9 +1,16 @@
 const asyncHandler = require("../utils/asyncHandler");
 const contractService = require("../services/contract.service");
+const prisma = require("../config/db"); // Needed for employee lookup
 
 // @desc    Get all contracts (with optional filters)
 // @route   GET /api/contracts?employeeId=&status=
 const getAll = asyncHandler(async (req, res) => {
+    // RBAC: If EMPLOYEE, forcefully scope query to their own employeeId
+    if (req.user.role === "EMPLOYEE") {
+        const employee = await prisma.employee.findUnique({ where: { userId: req.user.id } });
+        if (!employee) return res.status(403).json({ success: false, message: "Forbidden: Employee record not found" });
+        req.query.employeeId = employee.id;
+    }
     const contracts = await contractService.getAllContracts(req.query);
     res.status(200).json({ success: true, count: contracts.length, data: contracts });
 });
@@ -12,6 +19,15 @@ const getAll = asyncHandler(async (req, res) => {
 // @route   GET /api/contracts/:id
 const getById = asyncHandler(async (req, res) => {
     const contract = await contractService.getContractById(req.params.id);
+    
+    // RBAC: If EMPLOYEE, ensure this contract belongs to them
+    if (req.user.role === "EMPLOYEE") {
+        const employee = await prisma.employee.findUnique({ where: { userId: req.user.id } });
+        if (!employee || contract.employeeId !== employee.id) {
+            return res.status(403).json({ success: false, message: "Forbidden: Access denied to other employee contracts" });
+        }
+    }
+    
     res.status(200).json({ success: true, data: contract });
 });
 

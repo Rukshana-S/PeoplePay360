@@ -59,6 +59,18 @@ export const deletePayrun = async (id) => {
   return api.delete(`/payruns/${id}`);
 };
 
+export const updatePayrunStatus = async (id, status) => {
+  return api.put(`/payruns/${id}/status`, { status });
+};
+
+export const recomputePayrun = async (id) => {
+  return api.post(`/payruns/${id}/recompute`);
+};
+
+export const sendPayslips = async (id) => {
+  return api.post(`/payruns/${id}/send`);
+};
+
 // Payslips
 export const getPayslips = async (params) => {
   return api.get('/payslips', { params });

@@ -5,6 +5,8 @@ async function main() {
   console.log('Seeding Database with Master Data...');
 
   // 0. Clean existing master data (optional, but good for resetting during dev)
+  await prisma.user.deleteMany();
+  await prisma.employee.deleteMany();
   await prisma.scheduleDay.deleteMany();
   await prisma.workingSchedule.deleteMany();
   await prisma.timeOffType.deleteMany();
@@ -56,6 +58,17 @@ async function main() {
         ]
       }
     }
+  });
+
+  // 5. Create Default System Users
+  await prisma.user.createMany({
+    data: [
+      { email: 'admin@company.com', password: '123456', role: 'ADMIN' },
+      { email: 'hr@company.com', password: '123456', role: 'HR_MANAGER' },
+      { email: 'payroll@company.com', password: '123456', role: 'HR_PAYROLL_MANAGER' },
+      { email: 'payrolluser@company.com', password: '123456', role: 'HR_PAYROLL_USER' },
+      { email: 'employee@company.com', password: '123456', role: 'EMPLOYEE' }
+    ]
   });
 
   console.log('✅ Seeding completed successfully!');

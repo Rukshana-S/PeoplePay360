@@ -37,18 +37,19 @@ const PayslipView = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <MockRbacNotice moduleKey="payslips" moduleName={`Payslip (${empName})`} />
+      <MockRbacNotice moduleKey="payslips" moduleName={`Payslip (${empName})`} className="print-hidden" />
 
       <PageHeader
         title={`Payslip: ${empName}`}
         subtitle={`Period: ${new Date(payslip.payrun?.periodStart).toLocaleDateString()} - ${new Date(payslip.payrun?.periodEnd).toLocaleDateString()}`}
         showBack
         backPath="/payroll/payslips"
+        className="print-hidden"
       >
         <Button
           variant="outline"
-          onClick={() => toast.info("Exporting payslip PDF document...")}
-          className="border-[#1E293B] text-slate-300 hover:bg-[#1E293B] text-xs h-9"
+          onClick={() => window.print()}
+          className="print-hidden border-[#1E293B] text-slate-300 hover:bg-[#1E293B] text-xs h-9"
         >
           <Printer className="w-4 h-4 mr-1.5" />
           Print / PDF
@@ -84,9 +85,9 @@ const PayslipView = () => {
           <div>
             <span className="text-slate-400 font-medium block">Department & Role</span>
             <span className="font-bold text-slate-200 flex items-center gap-1.5 mt-0.5">
-              <Building2 className="w-3.5 h-3.5 text-purple-400" /> {employee.department || "N/A"}
+              <Building2 className="w-3.5 h-3.5 text-purple-400" /> {employee.department?.name || employee.department || "N/A"}
             </span>
-            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.jobPosition || "N/A"}</span>
+            <span className="text-slate-400 text-[11px] block mt-0.5">{employee.jobPosition?.title || employee.jobPosition || "N/A"}</span>
           </div>
 
           <div>
@@ -123,7 +124,7 @@ const PayslipView = () => {
                           : "hover:bg-slate-800/40"
                       }
                     >
-                      <td className="py-3 px-4">{line.ruleName}</td>
+                      <td className="py-3 px-4">{line.salaryRule?.name || line.ruleName}</td>
                       <td className="py-3 px-4 font-mono">
                         <span className={`px-1.5 py-0.5 rounded text-[10px] ${
                           line.category === "BASIC" || line.category === "ALW" ? "bg-emerald-500/10 text-emerald-400" :

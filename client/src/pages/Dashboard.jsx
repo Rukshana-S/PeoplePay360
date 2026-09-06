@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getRoleDisplayName, getRoleBadgeClass, canAccessModule } from "../utils/rolePermissions";
@@ -13,7 +13,12 @@ import {
   ShieldCheck,
   Sparkles,
   ArrowUpRight,
+  Building2,
+  DollarSign,
+  Loader2,
 } from "lucide-react";
+import { getDashboardStats } from "../api/dashboard";
+import { toast } from "react-toastify";
 
 const MODULE_CARDS = [
   {
@@ -93,11 +98,91 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const role = user?.role || "EMPLOYEE";
 
+  const [stats, setStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await getDashboardStats();
+        // The teammate's axios interceptor already unwraps response.data,
+        // so res is the actual JSON payload from the backend ({ status: 'success', data: {...} }).
+        setStats(res.data);
+      } catch (err) {
+        toast.error("Failed to load dashboard statistics");
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   // Filter modules permitted for the logged in user's role
   const allowedCards = MODULE_CARDS.filter((card) => canAccessModule(role, card.key));
 
+  const STAT_CARDS = [
+    {
+      label: "Total Employees",
+      value: stats?.totalEmployees ?? "—",
+      icon: Users,
+      color: "text-blue-400",
+      bg: "bg-blue-500/10 border-blue-500/30",
+    },
+    {
+      label: "Departments",
+      value: stats?.totalDepartments ?? "—",
+      icon: Building2,
+      color: "text-emerald-400",
+      bg: "bg-emerald-500/10 border-emerald-500/30",
+    },
+    {
+      label: "Pending Requests",
+      value: stats?.pendingTimeOffRequests ?? "—",
+      icon: Clock,
+      color: "text-amber-400",
+      bg: "bg-amber-500/10 border-amber-500/30",
+    },
+    {
+      label: "Payroll Cost",
+      value: stats?.latestPayrollCost != null
+        ? `₹${stats.latestPayrollCost.toLocaleString()}`
+        : "—",
+      icon: DollarSign,
+      color: "text-sky-400",
+      bg: "bg-sky-500/10 border-sky-500/30",
+    },
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Live Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {loadingStats ? (
+          <div className="col-span-full flex items-center justify-center py-6">
+            <Loader2 className="w-6 h-6 text-[#5B8DEF] animate-spin" />
+            <span className="ml-2 text-sm text-slate-400">Loading live statistics...</span>
+          </div>
+        ) : (
+          STAT_CARDS.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-4 flex items-center gap-4 shadow-md"
+              >
+                <div className={`w-10 h-10 rounded-lg ${stat.bg} border flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-medium">{stat.label}</p>
+                  <p className="text-xl font-bold text-white mt-0.5">{stat.value}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
       {/* Welcome Header Banner */}
       <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl p-6 relative overflow-hidden shadow-lg">
         <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-[#5B8DEF]/10 rounded-full blur-3xl pointer-events-none" />

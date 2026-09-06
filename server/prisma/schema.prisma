@@ -289,6 +289,7 @@ model TimeOffRequest {
   duration    Decimal @db.Decimal(5,2)
 
   status      RequestStatus
+  reason      String? @db.Text
 
   employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   type        TimeOffType @relation(fields: [typeId], references: [id])
@@ -340,7 +341,9 @@ model SalaryRule {
 
   structureId String
 
+  name        String
   code        String
+  formula     String?
 
   category    SalaryCategory
 

@@ -50,11 +50,13 @@ const createRule = async (data) => {
     return await prisma.salaryRule.create({
         data: {
             structureId: data.structureId,
+            name: data.name || data.code,
             code: data.code,
             category: data.category,
             sequence: data.sequence,
             ruleType: data.ruleType,
             amount: data.amount || null,
+            formula: data.formula || null,
         },
         include: {
             structure: { select: { id: true, name: true } }
@@ -85,11 +87,13 @@ const updateRule = async (id, data) => {
     }
 
     const updateData = {};
+    if (data.name) updateData.name = data.name;
     if (data.code) updateData.code = data.code;
     if (data.category) updateData.category = data.category;
     if (data.sequence) updateData.sequence = data.sequence;
     if (data.ruleType) updateData.ruleType = data.ruleType;
     if (data.amount !== undefined) updateData.amount = data.amount;
+    if (data.formula !== undefined) updateData.formula = data.formula;
 
     return await prisma.salaryRule.update({
         where: { id },

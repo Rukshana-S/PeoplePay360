@@ -8,8 +8,11 @@ import EmptyState from "../../components/shared/EmptyState";
 import { FileText, Trash2 } from "lucide-react";
 import ConfirmDeleteDialog from "../../components/shared/ConfirmDeleteDialog";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const ContractList = () => {
+  const { user } = useAuth();
+  const canManageContracts = ['HR_MANAGER', 'HR_PAYROLL_MANAGER', 'ADMIN'].includes(user?.role);
   const { contracts, loading, error, removeContract } = useContracts();
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState(null);
@@ -34,8 +37,8 @@ const ContractList = () => {
         subtitle="Manage employment agreements, terms, and salary structures"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="New Contract"
-        onActionClick={() => navigate("/contracts/new")}
+        actionLabel={canManageContracts ? "New Contract" : undefined}
+        onActionClick={canManageContracts ? () => navigate("/contracts/new") : undefined}
       />
 
       {loading ? (
@@ -46,9 +49,10 @@ const ContractList = () => {
         <EmptyState
           icon={FileText}
           title="No contracts found"
+          title="No contracts found"
           description="Try adjusting your search criteria or create a new contract agreement."
-          actionLabel="Create Contract"
-          onAction={() => navigate("/contracts/new")}
+          actionLabel={canManageContracts ? "Create Contract" : undefined}
+          onAction={canManageContracts ? () => navigate("/contracts/new") : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
@@ -63,7 +67,7 @@ const ContractList = () => {
                   <th className="py-3.5 px-4">End Date</th>
                   <th className="py-3.5 px-4">Annual Wage</th>
                   <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  {canManageContracts && <th className="py-3.5 px-4 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1E293B]/60">
@@ -82,21 +86,23 @@ const ContractList = () => {
                     <td className="py-3.5 px-4">
                       <StatusBadge status={cnt.status} />
                     </td>
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => {
-                          if (cnt.status !== "DRAFT") {
-                            toast.error("Only DRAFT contracts can be deleted.");
-                          } else {
-                            setDeleteId(cnt.id);
-                          }
-                        }}
-                        className={`p-1.5 rounded-lg transition-colors ${cnt.status === "DRAFT" ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10' : 'text-slate-600 cursor-not-allowed'}`}
-                        title={cnt.status === "DRAFT" ? "Delete Contract" : "Only DRAFT contracts can be deleted"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+                    {canManageContracts && (
+                      <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => {
+                            if (cnt.status !== "DRAFT") {
+                              toast.error("Only DRAFT contracts can be deleted.");
+                            } else {
+                              setDeleteId(cnt.id);
+                            }
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors ${cnt.status === "DRAFT" ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10' : 'text-slate-600 cursor-not-allowed'}`}
+                          title={cnt.status === "DRAFT" ? "Delete Contract" : "Only DRAFT contracts can be deleted"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

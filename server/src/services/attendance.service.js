@@ -1,9 +1,14 @@
 const prisma = require("../config/db");
 
 // GET all attendance records (with optional employeeId filter)
-const getAttendance = async (query) => {
+const getAttendance = async (query, user) => {
     const where = {};
     if (query.employeeId) where.employeeId = query.employeeId;
+    
+    // RBAC: If EMPLOYEE role, strictly limit to their own employee record
+    if (user?.role === "EMPLOYEE") {
+        where.employee = { userId: user.id };
+    }
 
     return await prisma.attendance.findMany({
         where,
@@ -15,7 +20,18 @@ const getAttendance = async (query) => {
 };
 
 // CHECK-IN (Creates a record for today with current timestamp)
-const checkIn = async (employeeId) => {
+const checkIn = async (employeeId, user) => {
+    let finalEmployeeId = employeeId;
+    
+    // Auto-resolve employee ID for EMPLOYEE or HR_MANAGER role
+    if (user?.role === "EMPLOYEE" || (user?.role === "HR_MANAGER" && !employeeId)) {
+        const emp = await prisma.employee.findUnique({ where: { userId: user.id } });
+        if (!emp) throw new Error("Employee profile not found for this user.");
+        finalEmployeeId = emp.id;
+    }
+    
+    if (!finalEmployeeId) throw new Error("Employee ID is required.");
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -25,7 +41,7 @@ const checkIn = async (employeeId) => {
     // Business Rule: Check if employee already checked in today
     const existing = await prisma.attendance.findFirst({
         where: {
-            employeeId,
+            employeeId: finalEmployeeId,
             checkIn: {
                 gte: startOfDay,
                 lte: endOfDay
@@ -39,7 +55,7 @@ const checkIn = async (employeeId) => {
 
     return await prisma.attendance.create({
         data: {
-            employeeId,
+            employeeId: finalEmployeeId,
             checkIn: new Date(),
             workedHours: 0,
             status: "PRESENT"
@@ -48,7 +64,18 @@ const checkIn = async (employeeId) => {
 };
 
 // CHECK-OUT (Updates today's record with checkout timestamp)
-const checkOut = async (employeeId) => {
+const checkOut = async (employeeId, user) => {
+    let finalEmployeeId = employeeId;
+    
+    // Auto-resolve employee ID for EMPLOYEE or HR_MANAGER role
+    if (user?.role === "EMPLOYEE" || (user?.role === "HR_MANAGER" && !employeeId)) {
+        const emp = await prisma.employee.findUnique({ where: { userId: user.id } });
+        if (!emp) throw new Error("Employee profile not found for this user.");
+        finalEmployeeId = emp.id;
+    }
+
+    if (!finalEmployeeId) throw new Error("Employee ID is required.");
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     
@@ -58,7 +85,7 @@ const checkOut = async (employeeId) => {
     // Business Rule: Must have checked in first
     const existing = await prisma.attendance.findFirst({
         where: {
-            employeeId,
+            employeeId: finalEmployeeId,
             checkIn: {
                 gte: startOfDay,
                 lte: endOfDay

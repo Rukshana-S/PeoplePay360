@@ -6,7 +6,7 @@ import { usePayroll } from "../../hooks/usePayroll";
 import PageHeader from "../../components/shared/PageHeader";
 import FormActions from "../../components/shared/FormActions";
 import InfoCard from "../../components/shared/InfoCard";
-import { FileText, DollarSign, Calendar } from "lucide-react";
+import { FileText, Calendar, IndianRupee } from "lucide-react";
 import { toast } from "react-toastify";
 
 const ContractCreate = () => {
@@ -122,7 +122,7 @@ const ContractCreate = () => {
                 className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
               >
                 <option value="">Select Employee</option>
-                {employees.filter(emp => emp.status !== 'TERMINATED').map((emp) => (
+                {employees.filter(emp => emp.status !== 'TERMINATED' && emp.user?.role === 'EMPLOYEE').map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} ({emp.employeeCode})
                   </option>
@@ -150,7 +150,7 @@ const ContractCreate = () => {
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Annual Contract Wage (₹) *</label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
                 <input
                   type="number"
                   required

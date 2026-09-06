@@ -7,8 +7,11 @@ import EmptyState from "../../components/shared/EmptyState";
 import { CalendarDays, Plus, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const ScheduleList = () => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
   const { schedules, loading, error, addSchedule } = useSchedules();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,8 +77,8 @@ const ScheduleList = () => {
         subtitle="Define standard weekly working hours, shifts, and break times"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="New Schedule"
-        onActionClick={() => setIsModalOpen(true)}
+        actionLabel={!isEmployee ? "New Schedule" : undefined}
+        onActionClick={!isEmployee ? () => setIsModalOpen(true) : undefined}
       />
 
       {loading ? (
@@ -87,8 +90,8 @@ const ScheduleList = () => {
           icon={CalendarDays}
           title="No schedules found"
           description="Create a new schedule configuration for your workforce."
-          actionLabel="Create Schedule"
-          onAction={() => setIsModalOpen(true)}
+          actionLabel={!isEmployee ? "Create Schedule" : undefined}
+          onAction={!isEmployee ? () => setIsModalOpen(true) : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">

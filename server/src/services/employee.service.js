@@ -1,8 +1,13 @@
 const prisma = require("../config/db");
 
 // GET all employees with filters
-const getAllEmployees = async (query) => {
+const getAllEmployees = async (query, user) => {
     const where = {};
+
+    // RBAC: If EMPLOYEE role, strictly limit to their own employee record
+    if (user?.role === "EMPLOYEE") {
+        where.userId = user.id;
+    }
 
     // Filter by department
     if (query.departmentId) where.departmentId = query.departmentId;
@@ -26,6 +31,7 @@ const getAllEmployees = async (query) => {
             jobPosition: true,
             schedule: true,
             manager: { select: { id: true, firstName: true, lastName: true } },
+            user: { select: { role: true } },
             _count: { select: { contracts: true, attendances: true, timeOffRequests: true, payslips: true } }
         },
         orderBy: { firstName: "asc" }
@@ -42,6 +48,7 @@ const getEmployeeById = async (id) => {
             schedule: true,
             manager: { select: { id: true, firstName: true, lastName: true } },
             subordinates: { select: { id: true, firstName: true, lastName: true } },
+            user: { select: { role: true } },
             contracts: { orderBy: { startDate: "desc" } },
             _count: { select: { contracts: true, attendances: true, timeOffRequests: true, payslips: true } }
         }

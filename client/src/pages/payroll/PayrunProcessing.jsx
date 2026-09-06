@@ -16,39 +16,63 @@ const PayrunProcessing = () => {
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchPayrunData = async () => {
+    try {
+      setLoading(true);
+      const [prRes, psRes] = await Promise.all([
+        api.getPayrunById(id),
+        api.getPayslips({ payrunId: id })
+      ]);
+      setPayrun(prRes.data || prRes);
+      setPayslips(psRes.data || psRes || []);
+    } catch (err) {
+      toast.error("Failed to load payrun details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [prRes, psRes] = await Promise.all([
-          api.getPayrunById(id),
-          api.getPayslips({ payrunId: id })
-        ]);
-        setPayrun(prRes.data || prRes);
-        setPayslips(psRes.data || psRes || []);
-      } catch (err) {
-        toast.error("Failed to load payrun details");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchPayrunData();
   }, [id]);
 
-  const handleCompute = () => {
-    toast.success("Batch computed (Mock action)");
+  const handleCompute = async () => {
+    try {
+      await api.recomputePayrun(id);
+      toast.success("Batch recomputed successfully");
+      fetchPayrunData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to recompute batch");
+    }
   };
 
-  const handleValidate = () => {
-    toast.success("Batch validated (Mock action)");
+  const handleValidate = async () => {
+    try {
+      await api.updatePayrunStatus(id, "VALIDATED");
+      toast.success("Batch validated successfully");
+      fetchPayrunData();
+    } catch (err) {
+      toast.error("Failed to validate batch");
+    }
   };
 
-  const handleMarkPaid = () => {
-    toast.success("Marked as paid (Mock action)");
+  const handleMarkPaid = async () => {
+    try {
+      await api.updatePayrunStatus(id, "PAID");
+      toast.success("Batch marked as paid");
+      fetchPayrunData();
+    } catch (err) {
+      toast.error("Failed to mark batch as paid");
+    }
   };
 
-  const handleSendPayslips = () => {
-    toast.info("Digital payslips emailed to all included employees!");
+  const handleSendPayslips = async () => {
+    try {
+      await api.sendPayslips(id);
+      toast.info("Digital payslips emailed to all included employees!");
+    } catch (err) {
+      toast.error("Failed to send payslips");
+    }
   };
 
   if (loading) {
@@ -97,24 +121,6 @@ const PayrunProcessing = () => {
             >
               <Calculator className="w-4 h-4 mr-1.5 text-purple-400" />
               Compute Batch
-            </Button>
-
-            <Button
-              onClick={handleValidate}
-              disabled={payrunStatus === "VALIDATED" || payrunStatus === "PAID"}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs h-9 px-4 shadow-md shadow-emerald-500/20 disabled:opacity-50"
-            >
-              <CheckCircle className="w-4 h-4 mr-1.5" />
-              Validate Batch
-            </Button>
-
-            <Button
-              onClick={handleMarkPaid}
-              disabled={payrunStatus === "PAID"}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-9 px-4 shadow-md shadow-blue-600/20 disabled:opacity-50"
-            >
-              <CreditCard className="w-4 h-4 mr-1.5" />
-              Mark Paid
             </Button>
 
             <Button

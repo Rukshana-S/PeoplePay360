@@ -4,14 +4,14 @@ const requestService = require("../services/timeOffRequest.service");
 // @desc    Get all time off requests
 // @route   GET /api/time-off-requests
 const getAll = asyncHandler(async (req, res) => {
-    const requests = await requestService.getAllRequests(req.query);
+    const requests = await requestService.getAllRequests(req.query, req.user);
     res.status(200).json({ success: true, count: requests.length, data: requests });
 });
 
 // @desc    Submit a time off request
 // @route   POST /api/time-off-requests
 const create = asyncHandler(async (req, res) => {
-    const request = await requestService.requestTimeOff(req.body);
+    const request = await requestService.requestTimeOff(req.body, req.user);
     res.status(201).json({ success: true, data: request });
 });
 

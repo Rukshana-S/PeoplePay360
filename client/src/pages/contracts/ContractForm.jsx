@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
-import { FileText, Info, DollarSign, Calendar, Building2, User, Clock, Layers } from "lucide-react";
+import { FileText, Info, IndianRupee, Calendar, Building2, User, Clock, Layers } from "lucide-react";
 import * as api from "../../api/contracts";
 import { toast } from "react-toastify";
 
@@ -104,7 +104,7 @@ const ContractForm = () => {
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase">Annual Contract Wage</label>
               <div className="mt-1 p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-emerald-400 flex items-center gap-2 font-bold text-base">
-                <DollarSign className="w-5 h-5 text-emerald-400" />
+                <IndianRupee className="w-5 h-5 text-emerald-400" />
                 <span>₹{Number(contract.wage).toLocaleString()} / year</span>
               </div>
             </div>

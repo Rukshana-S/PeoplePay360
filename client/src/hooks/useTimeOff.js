@@ -60,6 +60,7 @@ export const useTimeOff = () => {
     try {
       const res = await api.reviewTimeOffRequest(id, { status });
       await fetchRequests();
+      await fetchAllocations();
       return { success: true, data: res.data || res };
     } catch (err) {
       return { success: false, error: err.response?.data?.message || err.message };
@@ -69,6 +70,16 @@ export const useTimeOff = () => {
   const addAllocation = async (data) => {
     try {
       const res = await api.createTimeOffAllocation(data);
+      await fetchAllocations();
+      return { success: true, data: res.data || res };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  };
+
+  const removeAllocation = async (id) => {
+    try {
+      const res = await api.deleteTimeOffAllocation(id);
       await fetchAllocations();
       return { success: true, data: res.data || res };
     } catch (err) {
@@ -99,6 +110,7 @@ export const useTimeOff = () => {
     addRequest,
     reviewRequest,
     addAllocation,
+    removeAllocation,
     addLeaveType,
   };
 };

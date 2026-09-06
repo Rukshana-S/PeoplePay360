@@ -38,9 +38,9 @@ import AttendanceList from "./pages/attendance/AttendanceList";
 import AttendanceForm from "./pages/attendance/AttendanceForm";
 import AttendanceCreate from "./pages/attendance/AttendanceCreate";
 
-// Module 5: Time Off
 import TimeOffRequests from "./pages/timeoff/TimeOffRequests";
 import TimeOffRequestForm from "./pages/timeoff/TimeOffRequestForm";
+import TimeOffApprovals from "./pages/timeoff/TimeOffApprovals";
 import TimeOffAllocations from "./pages/timeoff/TimeOffAllocations";
 import LeaveTypes from "./pages/timeoff/LeaveTypes";
 
@@ -84,6 +84,7 @@ function App() {
             <Route path="/employees/:id/contracts" element={<EmployeeContracts />} />
             <Route path="/employees/:id/attendance" element={<EmployeeAttendance />} />
             <Route path="/employees/:id/timeoff" element={<EmployeeTimeOff />} />
+            <Route path="/profile" element={<EmployeeForm />} />
 
             {/* Module 2: Contracts */}
             <Route path="/contracts" element={<ContractList />} />
@@ -103,6 +104,7 @@ function App() {
             {/* Module 5: Time Off */}
             <Route path="/time-off/requests" element={<TimeOffRequests />} />
             <Route path="/time-off/requests/:id" element={<TimeOffRequestForm />} />
+            <Route path="/time-off/approvals" element={<TimeOffApprovals />} />
             <Route path="/time-off/allocations" element={<TimeOffAllocations />} />
             <Route path="/time-off/types" element={<LeaveTypes />} />
 

@@ -9,10 +9,15 @@ import { Button } from "../../components/ui/button";
 import { useEmployees } from "../../hooks/useEmployees";
 import * as api from "../../api/employees";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const EmployeeForm = () => {
-  const { id } = useParams();
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
+  const { id: paramId } = useParams();
   const navigate = useNavigate();
+  const isProfileRoute = window.location.pathname === '/profile';
+  const id = isProfileRoute ? user?.employeeId : paramId;
   
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,27 +72,31 @@ const EmployeeForm = () => {
       <PageHeader
         title={`Employee: ${employee.firstName} ${employee.lastName}`}
         subtitle={`Central Profile Hub • Code: ${employee.employeeCode}`}
-        showBack
+        showBack={!isProfileRoute}
         backPath="/employees"
       >
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/employees/${employee.id}/edit`)}
-            className="border-[#1E293B] bg-[#0F172A] hover:bg-[#1E293B] text-slate-300 hover:text-white text-xs h-9"
-          >
-            <Edit3 className="w-4 h-4 mr-1.5 text-[#5B8DEF]" />
-            Edit Profile
-          </Button>
+          {!isEmployee && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                className="border-[#1E293B] bg-[#0F172A] hover:bg-[#1E293B] text-slate-300 hover:text-white text-xs h-9"
+              >
+                <Edit3 className="w-4 h-4 mr-1.5 text-[#5B8DEF]" />
+                Edit Profile
+              </Button>
 
-          <Button
-            variant="outline"
-            onClick={() => setIsDeleteOpen(true)}
-            className="border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs h-9"
-          >
-            <Trash2 className="w-4 h-4 mr-1.5" />
-            Delete
-          </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteOpen(true)}
+                className="border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs h-9"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Delete
+              </Button>
+            </>
+          )}
 
           <div className="flex items-center gap-2 ml-2 border-l border-[#1E293B] pl-2">
             <SmartButton

@@ -8,24 +8,35 @@ import EmptyState from "../../components/shared/EmptyState";
 import { CalendarCheck, Plus, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "react-toastify";
+import { useAuth } from "../../context/AuthContext";
 
 const TimeOffAllocations = () => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'EMPLOYEE';
+  const isAdminOrHR = user?.role === 'ADMIN' || user?.role === 'HR_MANAGER';
   const { allocations, leaveTypes, loading, error, addAllocation } = useTimeOff();
   const { employees } = useEmployees();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [employeeId, setEmployeeId] = useState("");
   const [typeId, setTypeId] = useState("");
-  const [allocated, setAllocated] = useState(15);
-  const [validFrom, setValidFrom] = useState(new Date().toISOString().split("T")[0]);
-  const [validUntil, setValidUntil] = useState(new Date(new Date().getFullYear(), 11, 31).toISOString().split("T")[0]);
+  const [allocated, setAllocated] = useState("");
+  const [validFrom, setValidFrom] = useState(new Date().getFullYear() + "-01-01");
+  const [validUntil, setValidUntil] = useState(new Date().getFullYear() + "-12-31");
   const navigate = useNavigate();
 
   const filteredAllocations = allocations.filter((a) => {
+    // Employees only see their own. HR/Admin see what the backend returned (which is scoped)
+    if (isEmployee && a.employee?.userId !== user.id) return false;
+
     const empName = a.employee ? `${a.employee.firstName} ${a.employee.lastName}` : "";
+    const empCode = a.employee?.employeeCode || "";
     const typeName = a.type?.name || "";
-    return empName.toLowerCase().includes(search.toLowerCase()) ||
-      typeName.toLowerCase().includes(search.toLowerCase());
+    const s = search.toLowerCase();
+    
+    return empName.toLowerCase().includes(s) ||
+      empCode.toLowerCase().includes(s) ||
+      typeName.toLowerCase().includes(s);
   });
 
   const handleCreateAllocation = async (e) => {
@@ -43,11 +54,44 @@ const TimeOffAllocations = () => {
       validUntil,
     });
     if (res.success) {
-      toast.success("Leave allocation created");
+      toast.success("Leave allocation saved");
       setIsModalOpen(false);
+      resetForm();
     } else {
-      toast.error(res.error || "Failed to create allocation");
+      toast.error(res.error || "Failed to save allocation");
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this allocation?")) return;
+    const res = await removeAllocation(id);
+    if (res.success) {
+      toast.success("Allocation deleted");
+    } else {
+      toast.error(res.error || "Failed to delete allocation");
+    }
+  };
+
+  const handleEdit = (alloc) => {
+    setEmployeeId(alloc.employeeId);
+    setTypeId(alloc.typeId);
+    setAllocated(alloc.allocated);
+    setValidFrom(new Date(alloc.validFrom).toISOString().split('T')[0]);
+    setValidUntil(new Date(alloc.validUntil).toISOString().split('T')[0]);
+    setIsModalOpen(true);
+  };
+
+  const resetForm = () => {
+    setEmployeeId("");
+    setTypeId("");
+    setAllocated("");
+    setValidFrom(new Date().getFullYear() + "-01-01");
+    setValidUntil(new Date().getFullYear() + "-12-31");
+  };
+
+  const openNewModal = () => {
+    resetForm();
+    setIsModalOpen(true);
   };
 
   return (
@@ -62,6 +106,14 @@ const TimeOffAllocations = () => {
         >
           Leave Requests
         </button>
+        {isAdminOrHR && (
+          <button
+            onClick={() => navigate("/time-off/approvals")}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/50"
+          >
+            Leave Approvals
+          </button>
+        )}
         <button
           onClick={() => navigate("/time-off/allocations")}
           className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#5B8DEF] text-white"
@@ -81,8 +133,8 @@ const TimeOffAllocations = () => {
         subtitle="Annual leave quotas, taken days, and remaining balances per employee"
         searchQuery={search}
         onSearchChange={setSearch}
-        actionLabel="Allocate Leave"
-        onActionClick={() => setIsModalOpen(true)}
+        actionLabel={!isEmployee ? "Allocate Leave" : undefined}
+        onActionClick={!isEmployee ? openNewModal : undefined}
       />
 
       {loading ? (
@@ -94,35 +146,55 @@ const TimeOffAllocations = () => {
           icon={CalendarCheck}
           title="No allocations found"
           description="Allocate annual leave quotas to employees."
-          actionLabel="Allocate Leave"
-          onAction={() => setIsModalOpen(true)}
+          actionLabel={!isEmployee ? "Allocate Leave" : undefined}
+          onAction={!isEmployee ? openNewModal : undefined}
         />
       ) : (
         <div className="bg-[#0F172A] border border-[#1E293B] rounded-2xl overflow-hidden shadow-lg">
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-[#020817] text-slate-400 font-semibold uppercase tracking-wider border-b border-[#1E293B]">
               <tr>
-                <th className="py-3.5 px-4">Employee</th>
-                <th className="py-3.5 px-4">Leave Type</th>
-                <th className="py-3.5 px-4">Total Allocated</th>
-                <th className="py-3.5 px-4">Remaining Balance</th>
-                <th className="py-3.5 px-4">Valid Period</th>
+                {!isEmployee && <th className="py-3.5 px-4 font-semibold text-slate-300">Employee</th>}
+                <th className="py-3.5 px-4 font-semibold text-slate-300">Type</th>
+                <th className="py-3.5 px-4 font-semibold text-slate-300">Allocated</th>
+                <th className="py-3.5 px-4 font-semibold text-slate-300">Taken</th>
+                <th className="py-3.5 px-4 font-semibold text-slate-300">Remaining</th>
+                <th className="py-3.5 px-4 font-semibold text-slate-300">Status</th>
+                {!isEmployee && <th className="py-3.5 px-4 font-semibold text-slate-300 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#1E293B]/60">
-              {filteredAllocations.map((alloc) => (
-                <tr key={alloc.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-white">
-                    {alloc.employee ? `${alloc.employee.firstName} ${alloc.employee.lastName}` : "Unknown"}
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-300">{alloc.type?.name || "—"}</td>
-                  <td className="py-3.5 px-4 text-slate-400">{Number(alloc.allocated)} Days</td>
-                  <td className="py-3.5 px-4 font-bold text-emerald-400 text-sm">{Number(alloc.remaining)} Days</td>
-                  <td className="py-3.5 px-4 text-slate-500 text-[11px]">
-                    {new Date(alloc.validFrom).toLocaleDateString()} – {new Date(alloc.validUntil).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
+              {filteredAllocations.map((alloc) => {
+                const used = Number(alloc.allocated) - Number(alloc.remaining);
+                const year = new Date(alloc.validFrom).getFullYear();
+                
+                return (
+                  <tr key={alloc.id} className="hover:bg-slate-800/40 transition-colors border-b border-[#1E293B]/60">
+                    {!isEmployee && (
+                      <td className="py-4 px-4 text-slate-200">
+                        {alloc.employee ? `${alloc.employee.firstName} ${alloc.employee.lastName}` : "Unknown"}
+                      </td>
+                    )}
+                    <td className="py-4 px-4 text-slate-200">{alloc.type?.name || "—"}</td>
+                    <td className="py-4 px-4 text-slate-200">{Number(alloc.allocated)} days</td>
+                    <td className="py-4 px-4 text-slate-200">{used} days</td>
+                    <td className="py-4 px-4 text-slate-200">{Number(alloc.remaining)} days</td>
+                    <td className="py-4 px-4">
+                      <span className="text-emerald-500 font-medium tracking-wide">
+                        Approved
+                      </span>
+                    </td>
+                    {!isEmployee && (
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => handleEdit(alloc)} className="text-xs text-blue-400 hover:text-blue-300 font-medium">Edit</button>
+                          <button onClick={() => handleDelete(alloc.id)} className="text-xs text-rose-400 hover:text-rose-300 font-medium">Delete</button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

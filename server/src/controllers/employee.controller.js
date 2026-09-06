@@ -4,7 +4,7 @@ const employeeService = require("../services/employee.service");
 // @desc    Get all employees (with optional filters)
 // @route   GET /api/employees?departmentId=&status=&employeeType=&search=
 const getAll = asyncHandler(async (req, res) => {
-    const employees = await employeeService.getAllEmployees(req.query);
+    const employees = await employeeService.getAllEmployees(req.query, req.user);
     res.status(200).json({ success: true, count: employees.length, data: employees });
 });
 
