@@ -217,7 +217,6 @@ const AttendanceList = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-<<<<<<< Updated upstream
               {!isEmployee && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee *</label>
@@ -228,7 +227,7 @@ const AttendanceList = () => {
                     className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
                   >
                     <option value="">Select Employee</option>
-                    {employees.map((emp) => (
+                    {employees.filter(emp => emp.status === 'ACTIVE').map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         {emp.firstName} {emp.lastName} ({emp.employeeCode})
                       </option>
@@ -236,24 +235,6 @@ const AttendanceList = () => {
                   </select>
                 </div>
               )}
-=======
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee *</label>
-                <select
-                  required
-                  value={selectedEmployeeId}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
-                >
-                  <option value="">Select Employee</option>
-                  {employees.filter(emp => emp.status === 'ACTIVE').map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName} ({emp.employeeCode})
-                    </option>
-                  ))}
-                </select>
-              </div>
->>>>>>> Stashed changes
 
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Action *</label>

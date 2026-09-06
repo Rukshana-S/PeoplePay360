@@ -6,11 +6,7 @@ import { usePayroll } from "../../hooks/usePayroll";
 import PageHeader from "../../components/shared/PageHeader";
 import FormActions from "../../components/shared/FormActions";
 import InfoCard from "../../components/shared/InfoCard";
-<<<<<<< Updated upstream
-import { FileText, Calendar, IndianRupee } from "lucide-react";
-=======
 import { FileText, IndianRupee, Calendar } from "lucide-react";
->>>>>>> Stashed changes
 import { toast } from "react-toastify";
 
 const ContractCreate = () => {
@@ -126,11 +122,7 @@ const ContractCreate = () => {
                 className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
               >
                 <option value="">Select Employee</option>
-<<<<<<< Updated upstream
-                {employees.filter(emp => emp.status !== 'TERMINATED' && emp.user?.role === 'EMPLOYEE').map((emp) => (
-=======
-                {employees.filter(emp => emp.status === 'ACTIVE').map((emp) => (
->>>>>>> Stashed changes
+                {employees.filter(emp => emp.status === 'ACTIVE' && emp.user?.role === 'EMPLOYEE').map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} ({emp.employeeCode})
                   </option>

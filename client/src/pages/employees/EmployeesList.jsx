@@ -43,25 +43,7 @@ const EmployeesList = () => {
         onViewModeChange={(mode) => {
           if (mode === "kanban") navigate("/employees");
         }}
-<<<<<<< Updated upstream
-      >
-        {!isEmployee && (
-          <div className="flex items-center gap-2 mr-2 border-r border-[#1E293B] pr-3">
-            <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-300 font-medium">
-              <input 
-                type="checkbox" 
-                checked={showInactive} 
-                onChange={(e) => setShowInactive(e.target.checked)} 
-                className="rounded bg-[#020817] border-[#1E293B] text-[#5B8DEF] focus:ring-[#5B8DEF]"
-              />
-              Show Inactive
-            </label>
-          </div>
-        )}
-      </PageHeader>
-=======
       />
->>>>>>> Stashed changes
 
       {loading ? (
         <div className="text-white p-6">Loading employees...</div>

@@ -86,47 +86,29 @@ const ContractList = () => {
                     <td className="py-3.5 px-4">
                       <StatusBadge status={cnt.status} />
                     </td>
-<<<<<<< Updated upstream
                     {canManageContracts && (
                       <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => {
-                            if (cnt.status !== "DRAFT") {
-                              toast.error("Only DRAFT contracts can be deleted.");
-                            } else {
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${cnt.id}/edit`); }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-[#5B8DEF] hover:bg-[#5B8DEF]/10 transition-colors"
+                            title="Edit Contract"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setDeleteId(cnt.id);
-                            }
-                          }}
-                          className={`p-1.5 rounded-lg transition-colors ${cnt.status === "DRAFT" ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10' : 'text-slate-600 cursor-not-allowed'}`}
-                          title={cnt.status === "DRAFT" ? "Delete Contract" : "Only DRAFT contracts can be deleted"}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            title="Delete Contract"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     )}
-=======
-                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${cnt.id}/edit`); }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#5B8DEF] hover:bg-[#5B8DEF]/10 transition-colors"
-                          title="Edit Contract"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(cnt.id);
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                          title="Delete Contract"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
->>>>>>> Stashed changes
                   </tr>
                 ))}
               </tbody>
