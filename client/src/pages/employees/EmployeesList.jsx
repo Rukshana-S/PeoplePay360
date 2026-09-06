@@ -17,8 +17,6 @@ const EmployeesList = () => {
   const [deleteId, setDeleteId] = useState(null);
   const navigate = useNavigate();
 
-  const [showInactive, setShowInactive] = useState(false);
-
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch = emp.firstName.toLowerCase().includes(search.toLowerCase()) ||
       emp.lastName.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,7 +24,7 @@ const EmployeesList = () => {
       emp.department?.name?.toLowerCase().includes(search.toLowerCase()) ||
       emp.jobPosition?.title?.toLowerCase().includes(search.toLowerCase());
     
-    const matchesStatus = showInactive || emp.status !== 'TERMINATED';
+    const matchesStatus = emp.status !== 'TERMINATED' && emp.status !== 'INACTIVE';
     return matchesSearch && matchesStatus;
   });
 
@@ -45,6 +43,7 @@ const EmployeesList = () => {
         onViewModeChange={(mode) => {
           if (mode === "kanban") navigate("/employees");
         }}
+<<<<<<< Updated upstream
       >
         {!isEmployee && (
           <div className="flex items-center gap-2 mr-2 border-r border-[#1E293B] pr-3">
@@ -60,6 +59,9 @@ const EmployeesList = () => {
           </div>
         )}
       </PageHeader>
+=======
+      />
+>>>>>>> Stashed changes
 
       {loading ? (
         <div className="text-white p-6">Loading employees...</div>
@@ -129,18 +131,21 @@ const EmployeesList = () => {
         </div>
       )}
 
-      {deleteId && (
-        <ConfirmDeleteDialog
-          isOpen={!!deleteId}
-          onClose={() => setDeleteId(null)}
-          onConfirm={() => {
-            removeEmployee(deleteId);
-            setDeleteId(null);
-          }}
-          title="Remove Employee Record"
-          description="Are you sure you want to remove this employee record from the system?"
-        />
-      )}
+      {deleteId && (() => {
+        const empToDelete = employees.find(e => e.id === deleteId);
+        return (
+          <ConfirmDeleteDialog
+            isOpen={!!deleteId}
+            onClose={() => setDeleteId(null)}
+            onConfirm={async () => {
+              await removeEmployee(deleteId);
+              setDeleteId(null);
+            }}
+            title={`Delete ${empToDelete?.firstName} ${empToDelete?.lastName}?`}
+            description="Warning: This employee will be archived."
+          />
+        );
+      })()}
     </div>
   );
 };

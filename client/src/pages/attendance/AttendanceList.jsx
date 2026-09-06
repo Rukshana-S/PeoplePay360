@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useEmployees } from "../../hooks/useEmployees";
@@ -22,6 +22,13 @@ const AttendanceList = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [action, setAction] = useState("CHECK_IN");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (selectedEmployeeId) {
+      const hasActiveSession = attendance.some(a => a.employee?.id === selectedEmployeeId && a.checkIn && !a.checkOut);
+      setAction(hasActiveSession ? "CHECK_OUT" : "CHECK_IN");
+    }
+  }, [selectedEmployeeId, attendance]);
 
   const filteredLogs = attendance.filter((a) => {
     const empName = a.employee ? `${a.employee.firstName} ${a.employee.lastName}` : "";
@@ -210,6 +217,7 @@ const AttendanceList = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+<<<<<<< Updated upstream
               {!isEmployee && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee *</label>
@@ -228,28 +236,46 @@ const AttendanceList = () => {
                   </select>
                 </div>
               )}
+=======
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Select Employee *</label>
+                <select
+                  required
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
+                >
+                  <option value="">Select Employee</option>
+                  {employees.filter(emp => emp.status === 'ACTIVE').map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.firstName} {emp.lastName} ({emp.employeeCode})
+                    </option>
+                  ))}
+                </select>
+              </div>
+>>>>>>> Stashed changes
 
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Action *</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
-                    onClick={() => setAction("CHECK_IN")}
+                    disabled={action === "CHECK_OUT"}
                     className={`p-3 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                       action === "CHECK_IN"
                         ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
-                        : "bg-[#020817] border-[#1E293B] text-slate-400 hover:border-slate-600"
+                        : "bg-[#020817] border-[#1E293B] text-slate-400 opacity-50 cursor-not-allowed"
                     }`}
                   >
                     <LogIn className="w-4 h-4" /> Check In
                   </button>
                   <button
                     type="button"
-                    onClick={() => setAction("CHECK_OUT")}
+                    disabled={action === "CHECK_IN"}
                     className={`p-3 rounded-lg border text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                       action === "CHECK_OUT"
                         ? "bg-amber-500/20 border-amber-500/50 text-amber-400"
-                        : "bg-[#020817] border-[#1E293B] text-slate-400 hover:border-slate-600"
+                        : "bg-[#020817] border-[#1E293B] text-slate-400 opacity-50 cursor-not-allowed"
                     }`}
                   >
                     <LogOut className="w-4 h-4" /> Check Out

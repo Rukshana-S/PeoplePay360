@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useContracts } from "../../hooks/useContracts";
 import { useEmployees } from "../../hooks/useEmployees";
 import { usePayroll } from "../../hooks/usePayroll";
 import PageHeader from "../../components/shared/PageHeader";
 import FormActions from "../../components/shared/FormActions";
 import InfoCard from "../../components/shared/InfoCard";
-<<<<<<< Updated upstream
-import { FileText, Calendar, IndianRupee } from "lucide-react";
-=======
 import { FileText, IndianRupee, Calendar } from "lucide-react";
->>>>>>> Stashed changes
 import { toast } from "react-toastify";
 
-const ContractCreate = () => {
+const ContractEdit = () => {
   const navigate = useNavigate();
-  const { addContract, contracts } = useContracts();
+  const { id } = useParams();
+  const { updateContract, contracts } = useContracts();
   const { employees, loading: empLoading } = useEmployees();
   const { salaryStructures, salaryRules, loading: structLoading } = usePayroll();
 
@@ -32,11 +29,25 @@ const ContractCreate = () => {
   const [hasActiveContract, setHasActiveContract] = useState(false);
 
   useEffect(() => {
+    const contractToEdit = contracts.find((c) => c.id === id);
+    if (contractToEdit) {
+      setFormData({
+        employeeId: contractToEdit.employeeId,
+        salaryStructureId: contractToEdit.salaryStructureId,
+        wage: contractToEdit.wage,
+        startDate: new Date(contractToEdit.startDate).toISOString().split("T")[0],
+        endDate: contractToEdit.endDate ? new Date(contractToEdit.endDate).toISOString().split("T")[0] : "",
+        status: contractToEdit.status,
+      });
+    }
+  }, [id, contracts]);
+
+  useEffect(() => {
     const active = contracts.some(
-      (c) => c.employeeId === formData.employeeId && c.status === "ACTIVE"
+      (c) => c.employeeId === formData.employeeId && c.status === "ACTIVE" && c.id !== id
     );
     setHasActiveContract(active);
-  }, [formData.employeeId, contracts]);
+  }, [formData.employeeId, contracts, id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,14 +91,14 @@ const ContractCreate = () => {
       payload.endDate = new Date(formData.endDate).toISOString();
     }
 
-    const res = await addContract(payload);
+    const res = await updateContract(id, payload);
     setIsSubmitting(false);
     
     if (res.success) {
-      toast.success("Contract created successfully");
+      toast.success("Contract updated successfully");
       navigate(`/contracts/${res.data.id}`);
     } else {
-      toast.error(res.error || "Failed to create contract");
+      toast.error(res.error || "Failed to update contract");
     }
   };
 
@@ -98,8 +109,8 @@ const ContractCreate = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Create New Contract"
-        subtitle="Issue an employment agreement, assign salary structure, and define terms"
+        title="Edit Contract"
+        subtitle="Modify employment agreement, assign salary structure, and define terms"
         showBack
         backPath="/contracts"
       />
@@ -126,11 +137,7 @@ const ContractCreate = () => {
                 className="w-full p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white focus:border-[#5B8DEF] focus:outline-none"
               >
                 <option value="">Select Employee</option>
-<<<<<<< Updated upstream
-                {employees.filter(emp => emp.status !== 'TERMINATED' && emp.user?.role === 'EMPLOYEE').map((emp) => (
-=======
                 {employees.filter(emp => emp.status === 'ACTIVE').map((emp) => (
->>>>>>> Stashed changes
                   <option key={emp.id} value={emp.id}>
                     {emp.firstName} {emp.lastName} ({emp.employeeCode})
                   </option>
@@ -156,7 +163,7 @@ const ContractCreate = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Annual Contract Wage (₹) *</label>
+              <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Annual Contract Wage (â‚¹) *</label>
               <div className="relative">
                 <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
                 <input
@@ -228,7 +235,7 @@ const ContractCreate = () => {
                     <tr>
                       <th className="py-2.5 px-4 font-semibold text-slate-400">Rule Name</th>
                       <th className="py-2.5 px-4 font-semibold text-slate-400">Type</th>
-                      <th className="py-2.5 px-4 font-semibold text-slate-400 text-right">Amount (₹)</th>
+                      <th className="py-2.5 px-4 font-semibold text-slate-400 text-right">Amount (â‚¹)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1E293B]">
@@ -296,7 +303,7 @@ const ContractCreate = () => {
           <FormActions
             onCancel={() => navigate("/contracts")}
             isSubmitting={isSubmitting}
-            saveLabel="Issue Contract"
+            saveLabel="Update Contract"
           />
         </form>
       </div>
@@ -304,4 +311,4 @@ const ContractCreate = () => {
   );
 };
 
-export default ContractCreate;
+export default ContractEdit;

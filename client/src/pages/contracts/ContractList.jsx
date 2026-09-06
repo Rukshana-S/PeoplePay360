@@ -5,7 +5,7 @@ import PageHeader from "../../components/common/PageHeader";
 import StatusBadge from "../../components/common/StatusBadge";
 import MockRbacNotice from "../../components/common/MockRbacNotice";
 import EmptyState from "../../components/shared/EmptyState";
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, Trash2, Edit } from "lucide-react";
 import ConfirmDeleteDialog from "../../components/shared/ConfirmDeleteDialog";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -82,10 +82,11 @@ const ContractList = () => {
                     <td className="py-3.5 px-4 text-slate-300">{cnt.salaryStructure?.name || "-"}</td>
                     <td className="py-3.5 px-4 text-slate-400">{new Date(cnt.startDate).toLocaleDateString()}</td>
                     <td className="py-3.5 px-4 text-slate-400">{cnt.endDate ? new Date(cnt.endDate).toLocaleDateString() : "-"}</td>
-                    <td className="py-3.5 px-4 font-bold text-emerald-400">₹{Number(cnt.wage).toLocaleString()}</td>
+                    <td className="py-3.5 px-4 font-bold text-emerald-400">₹{Number(cnt.wage).toLocaleString('en-IN')}</td>
                     <td className="py-3.5 px-4">
                       <StatusBadge status={cnt.status} />
                     </td>
+<<<<<<< Updated upstream
                     {canManageContracts && (
                       <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <button
@@ -103,6 +104,29 @@ const ContractList = () => {
                         </button>
                       </td>
                     )}
+=======
+                    <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${cnt.id}/edit`); }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#5B8DEF] hover:bg-[#5B8DEF]/10 transition-colors"
+                          title="Edit Contract"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(cnt.id);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Delete Contract"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+>>>>>>> Stashed changes
                   </tr>
                 ))}
               </tbody>

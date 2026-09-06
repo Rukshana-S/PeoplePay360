@@ -7,6 +7,7 @@ import ConfirmDeleteDialog from "../../components/shared/ConfirmDeleteDialog";
 import { Mail, Phone, Building2, Briefcase, User, Calendar, MapPin, Shield, CreditCard, Home, FileText, CalendarCheck, Clock, Edit3, Trash2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { useEmployees } from "../../hooks/useEmployees";
+import { usePayroll } from "../../hooks/usePayroll";
 import * as api from "../../api/employees";
 import { toast } from "react-toastify";
 import { useAuth } from "../../context/AuthContext";
@@ -39,6 +40,12 @@ const EmployeeForm = () => {
   }, [id]);
 
   const { removeEmployee } = useEmployees();
+  const { salaryStructures } = usePayroll();
+
+  const activeContract = employee?.contracts?.find(c => c.status === 'ACTIVE');
+  const salaryStructureName = activeContract 
+    ? salaryStructures?.find(s => s.id === activeContract.salaryStructureId)?.name || "Unknown Structure"
+    : "No Active Contract";
 
   const handleDeleteConfirm = async () => {
     try {
@@ -199,6 +206,13 @@ const EmployeeForm = () => {
                 <div className="mt-1 p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-emerald-400" />
                   <span>{employee.schedule?.name || "None"}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 uppercase">Current Salary Structure</label>
+                <div className="mt-1 p-2.5 bg-[#020817] border border-[#1E293B] rounded-lg text-sm text-white flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-emerald-400" />
+                  <span>{salaryStructureName}</span>
                 </div>
               </div>
             </div>

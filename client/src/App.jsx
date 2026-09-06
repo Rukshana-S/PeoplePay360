@@ -28,6 +28,7 @@ import EmployeeTimeOff from "./pages/employees/EmployeeTimeOff";
 import ContractList from "./pages/contracts/ContractList";
 import ContractForm from "./pages/contracts/ContractForm";
 import ContractCreate from "./pages/contracts/ContractCreate";
+import ContractEdit from "./pages/contracts/ContractEdit";
 
 // Module 3: Schedules
 import ScheduleList from "./pages/schedules/ScheduleList";
@@ -90,6 +91,7 @@ function App() {
             <Route path="/contracts" element={<ContractList />} />
             <Route path="/contracts/new" element={<ContractCreate />} />
             <Route path="/contracts/:id" element={<ContractForm />} />
+            <Route path="/contracts/:id/edit" element={<ContractEdit />} />
 
             {/* Module 3: Working Schedules */}
             <Route path="/working-schedules" element={<ScheduleList />} />
